@@ -17,7 +17,8 @@ from social_network import TextFilterService
 # warnings.filterwarnings("ignore", category=UserWarning)
 
 # import numpy as np
-from sklearn.externals import joblib
+
+# from sklearn.externals import joblib
 
 class TextFilterHandler:
     def __init__(self):
