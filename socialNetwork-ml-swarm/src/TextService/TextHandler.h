@@ -34,7 +34,7 @@ class TextHandler : public TextServiceIf {
   ClientPool<ThriftClient<ComposePostServiceClient>> *_compose_client_pool;
   ClientPool<ThriftClient<UrlShortenServiceClient>> *_url_client_pool;
   ClientPool<ThriftClient<UserMentionServiceClient>> *_user_mention_client_pool;
-  ClientPool<ThriftClient<UserMentionServiceClient>> *_text_filter_client_pool;
+  ClientPool<ThriftClient<TextFilterServiceClient>> *_text_filter_client_pool;
 };
 
 TextHandler::TextHandler(
@@ -171,6 +171,8 @@ void TextHandler::UploadText(
     LOG(error) << "Failed to get text-filter from text-filter-service";
     throw;
   }
+
+  std::cout << "text_filter = " << text_filter << std::endl;
 
   std::string updated_text;
   if(text_filter) {

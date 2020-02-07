@@ -2,6 +2,7 @@ add_executable(
     TextService
     TextService.cpp
     ${THRIFT_GEN_CPP_DIR}/TextService.cpp
+    ${THRIFT_GEN_CPP_DIR}/TextFilterService.cpp
     ${THRIFT_GEN_CPP_DIR}/ComposePostService.cpp
     ${THRIFT_GEN_CPP_DIR}/UserMentionService.cpp
     ${THRIFT_GEN_CPP_DIR}/UrlShortenService.cpp

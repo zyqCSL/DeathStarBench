@@ -12,33 +12,37 @@ from thrift.server import TServer
 
 from social_network import TextFilterService
 
-import warnings
+# import warnings
 # warnings.filterwarnings("ignore", category=FutureWarning)
 # warnings.filterwarnings("ignore", category=UserWarning)
 
-import numpy as np
+# import numpy as np
 from sklearn.externals import joblib
 
 class TextFilterHandler:
     def __init__(self):
-        # pass
+        pass
         # test if parallel procecssing works
-        self.vectorizer = joblib.load('./data/vectorizer.joblib')
-        self.model = joblib.load('./data/model.joblib')
 
     def UploadText(self, req_id, text, carrier):
         # assume 1 text snippet in each post
-        probs = self.model.predict(self.vectorizer.transform([text]))
-        return probs[0]
+        print "recv text = ", text
+        # vectorizer = joblib.load('./data/vectorizer.joblib')
+        # model = joblib.load('./data/model.joblib')
+        # probs = model.predict(vectorizer.transform([text]))
+        # return probs[0]
+        return False
 
 if __name__ == '__main__':
-    assert(os.path.isfile('/config/service-config.json'))
+    assert(os.path.isfile('../../config/service-config.json'))
     text_filter_addr = ''
     text_filter_port = 0
-    with open('/config/service-config.json', 'r') as config_json:
+    with open('../../config/service-config.json', 'r') as config_json:
         config = json.load(config_json)
         text_filter_addr = config['text-filter-service']['addr']
         text_filter_port = config['text-filter-service']['port']
+        print "addr = ", text_filter_addr
+        print "port = ", text_filter_port
 
     handler = TextFilterHandler()
     processor = TextFilterService.Processor(handler)
@@ -46,8 +50,10 @@ if __name__ == '__main__':
     tfactory = TTransport.TBufferedTransportFactory()
     pfactory = TBinaryProtocol.TBinaryProtocolFactory()
 
-    server = TServer.TThreadedServer(
-        processor, transport, tfactory, pfactory)
+    server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)
+    
+    # server = TServer.TThreadedServer(
+    #     processor, transport, tfactory, pfactory)
     # server = TServer.TThreadPoolServer(
     #     processor, transport, tfactory, pfactory)
 
