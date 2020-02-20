@@ -12,9 +12,9 @@ services:
 
   text-filter-service:
     image: yz2297/social-network-text-filer
-    hostname: text-filter-service
+    # hostname: text-filter-service
     container_name: social-ml-text-filter
-    # ports:
-    #   - 40000:40000
+    ports:
+      - 40000:40000
     restart: always
     # entrypoint: SocialGraphService
