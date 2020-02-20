@@ -12,6 +12,6 @@ COPY ./ /social-network-microservices
 
 RUN pip install -r /social-network-microservices/requirements.txt
 
-WORKDIR   /social-network-microservices/src/TextFilterService
+WORKDIR   /social-network-microservices/test
 
-ENTRYPOINT ["python", "TextFilterService.py"]
+ENTRYPOINT ["python", "TestTextFilterService.py"]

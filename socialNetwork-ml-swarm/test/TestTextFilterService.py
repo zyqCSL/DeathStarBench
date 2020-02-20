@@ -10,7 +10,7 @@ from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
 def main():
-  socket = TSocket.TSocket(host='ath-1.ece.cornell.edu', port=40000)
+  socket = TSocket.TSocket(host='localhost', port=40000)
   transport = TTransport.TFramedTransport(socket)
   protocol = TBinaryProtocol.TBinaryProtocol(transport)
   client = TextFilterService.Client(protocol)

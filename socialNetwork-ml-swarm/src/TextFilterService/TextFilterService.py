@@ -28,12 +28,13 @@ class TextFilterServiceHandler:
 
     def UploadText(self, req_id, text, carrier):
         # assume 1 text snippet in each post
-        print "recv text = ", text
+        print 'recv text = ', text
+        print 'what the fuck'
         # vectorizer = joblib.load('./data/vectorizer.joblib')
         # model = joblib.load('./data/model.joblib')
         # probs = model.predict(vectorizer.transform([text]))
         # return probs[0]
-        return text
+        return False
 
 if __name__ == '__main__':
     host_addr = 'localhost'
