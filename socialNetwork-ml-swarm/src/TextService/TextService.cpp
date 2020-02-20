@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         user_mention_port, 0, user_mention_conns, user_mention_timeout);
 
     ClientPool<ThriftClient<TextFilterServiceClient>> text_filter_pool(
-        "text-filter-service", user_mention_addr,
+        "text-filter-service", text_filter_addr,
         text_filter_port, 0, text_filter_conns, text_filter_timeout);
 
     TThreadedServer server(
