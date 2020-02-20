@@ -19,7 +19,7 @@ from social_network import TextFilterService
 
 # import numpy as np
 
-# from sklearn.externals import joblib
+from sklearn.externals import joblib
 
 class TextFilterServiceHandler:
     def __init__(self):
@@ -29,12 +29,10 @@ class TextFilterServiceHandler:
     def UploadText(self, req_id, text, carrier):
         # assume 1 text snippet in each post
         print 'recv text = ', text
-        print 'what the fuck'
-        # vectorizer = joblib.load('./data/vectorizer.joblib')
-        # model = joblib.load('./data/model.joblib')
-        # probs = model.predict(vectorizer.transform([text]))
-        # return probs[0]
-        return False
+        vectorizer = joblib.load('./data/vectorizer.joblib')
+        model = joblib.load('./data/model.joblib')
+        probs = model.predict(vectorizer.transform([text]))
+        return probs[0] < 0.5
 
 if __name__ == '__main__':
     host_addr = 'localhost'
