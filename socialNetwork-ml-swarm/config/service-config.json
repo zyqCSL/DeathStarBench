@@ -104,7 +104,7 @@
   },
   "text-filter-service": {
     "addr": "text-filter-service",
-    "port": 9090,
+    "port": 40000,
     "connections": 512,
     "timeout_ms": 1000
   },
