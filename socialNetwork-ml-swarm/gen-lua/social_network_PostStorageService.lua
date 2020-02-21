@@ -6,10 +6,10 @@
 --
 
 
-local Thrift = require 'Thrift'
-local social_network_ttypes = require 'social_network_ttypes'
+require 'Thrift'
+require 'social_network_ttypes'
 
-local PostStorageServiceClient = __TObject.new(__TClient, {
+PostStorageServiceClient = __TObject.new(__TClient, {
   __type = 'PostStorageServiceClient'
 })
 
@@ -111,12 +111,12 @@ function PostStorageServiceClient:recv_ReadPosts(req_id, post_ids, carrier)
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
 end
-local PostStorageServiceIface = __TObject:new{
+PostStorageServiceIface = __TObject:new{
   __type = 'PostStorageServiceIface'
 }
 
 
-local PostStorageServiceProcessor = __TObject.new(__TProcessor
+PostStorageServiceProcessor = __TObject.new(__TProcessor
 , {
  __type = 'PostStorageServiceProcessor'
 })
@@ -204,7 +204,7 @@ end
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-local StorePost_args = __TObject:new{
+StorePost_args = __TObject:new{
   req_id,
   post,
   carrier
@@ -276,7 +276,7 @@ function StorePost_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local StorePost_result = __TObject:new{
+StorePost_result = __TObject:new{
   se
 }
 
@@ -312,7 +312,7 @@ function StorePost_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local ReadPost_args = __TObject:new{
+ReadPost_args = __TObject:new{
   req_id,
   post_id,
   carrier
@@ -383,7 +383,7 @@ function ReadPost_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local ReadPost_result = __TObject:new{
+ReadPost_result = __TObject:new{
   success,
   se
 }
@@ -432,7 +432,7 @@ function ReadPost_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local ReadPosts_args = __TObject:new{
+ReadPosts_args = __TObject:new{
   req_id,
   post_ids,
   carrier
@@ -513,7 +513,7 @@ function ReadPosts_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local ReadPosts_result = __TObject:new{
+ReadPosts_result = __TObject:new{
   success,
   se
 }

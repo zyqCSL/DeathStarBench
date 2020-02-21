@@ -6,19 +6,10 @@
 --
 
 
-local Thrift = require 'Thrift'
-local TType = Thrift.TType
-local TMessageType = Thrift.TMessageType
-local __TObject = Thrift.__TObject
-local TApplicationException = Thrift.TApplicationException
-local __TClient = Thrift.__TClient
-local __TProcessor = Thrift.__TProcessor
-local ttype = Thrift.ttype
-local ttable_size = Thrift.ttable_size
-local social_network_ttypes = require 'social_network_ttypes'
-local ServiceException = social_network_ttypes.ServiceException
+require 'Thrift'
+require 'social_network_ttypes'
 
-local TextFilterServiceClient = __TObject.new(__TClient, {
+TextFilterServiceClient = __TObject.new(__TClient, {
   __type = 'TextFilterServiceClient'
 })
 
@@ -56,12 +47,12 @@ function TextFilterServiceClient:recv_UploadText(req_id, text, carrier)
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
 end
-local TextFilterServiceIface = __TObject:new{
+TextFilterServiceIface = __TObject:new{
   __type = 'TextFilterServiceIface'
 }
 
 
-local TextFilterServiceProcessor = __TObject.new(__TProcessor
+TextFilterServiceProcessor = __TObject.new(__TProcessor
 , {
  __type = 'TextFilterServiceProcessor'
 })
@@ -107,7 +98,7 @@ end
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-local UploadText_args = __TObject:new{
+UploadText_args = __TObject:new{
   req_id,
   text,
   carrier
@@ -178,7 +169,7 @@ function UploadText_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadText_result = __TObject:new{
+UploadText_result = __TObject:new{
   success,
   se
 }

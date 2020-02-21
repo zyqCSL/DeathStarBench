@@ -391,8 +391,8 @@ Media::~Media() throw() {
 }
 
 
-void Media::__set_media_id(const int64_t val) {
-  this->media_id = val;
+void Media::__set_media(const std::string& val) {
+  this->media = val;
 }
 
 void Media::__set_media_type(const std::string& val) {
@@ -427,9 +427,9 @@ uint32_t Media::read(::apache::thrift::protocol::TProtocol* iprot) {
     switch (fid)
     {
       case 1:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->media_id);
-          this->__isset.media_id = true;
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->media);
+          this->__isset.media = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -459,8 +459,8 @@ uint32_t Media::write(::apache::thrift::protocol::TProtocol* oprot) const {
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("Media");
 
-  xfer += oprot->writeFieldBegin("media_id", ::apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64(this->media_id);
+  xfer += oprot->writeFieldBegin("media", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->media);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldBegin("media_type", ::apache::thrift::protocol::T_STRING, 2);
@@ -474,18 +474,18 @@ uint32_t Media::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
 void swap(Media &a, Media &b) {
   using ::std::swap;
-  swap(a.media_id, b.media_id);
+  swap(a.media, b.media);
   swap(a.media_type, b.media_type);
   swap(a.__isset, b.__isset);
 }
 
 Media::Media(const Media& other5) {
-  media_id = other5.media_id;
+  media = other5.media;
   media_type = other5.media_type;
   __isset = other5.__isset;
 }
 Media& Media::operator=(const Media& other6) {
-  media_id = other6.media_id;
+  media = other6.media;
   media_type = other6.media_type;
   __isset = other6.__isset;
   return *this;
@@ -493,7 +493,7 @@ Media& Media::operator=(const Media& other6) {
 void Media::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "Media(";
-  out << "media_id=" << to_string(media_id);
+  out << "media=" << to_string(media);
   out << ", " << "media_type=" << to_string(media_type);
   out << ")";
 }

@@ -6,20 +6,10 @@
 --
 
 
-local Thrift = require 'Thrift'
-local TType = Thrift.TType
-local TMessageType = Thrift.TMessageType
-local __TObject = Thrift.__TObject
-local TApplicationException = Thrift.TApplicationException
-local __TClient = Thrift.__TClient
-local __TProcessor = Thrift.__TProcessor
-local ttype = Thrift.ttype
-local ttable_size = Thrift.ttable_size
-local social_network_ttypes = require 'social_network_ttypes'
-local ServiceException = social_network_ttypes.ServiceException
-local Post = social_network_ttypes.Post
+require 'Thrift'
+require 'social_network_ttypes'
 
-local ComposePostServiceClient = __TObject.new(__TClient, {
+ComposePostServiceClient = __TObject.new(__TClient, {
   __type = 'ComposePostServiceClient'
 })
 
@@ -197,12 +187,12 @@ function ComposePostServiceClient:recv_UploadUserMentions(req_id, user_mentions,
   result:read(self.iprot)
   self.iprot:readMessageEnd()
 end
-local ComposePostServiceIface = __TObject:new{
+ComposePostServiceIface = __TObject:new{
   __type = 'ComposePostServiceIface'
 }
 
 
-local ComposePostServiceProcessor = __TObject.new(__TProcessor
+ComposePostServiceProcessor = __TObject.new(__TProcessor
 , {
  __type = 'ComposePostServiceProcessor'
 })
@@ -353,7 +343,7 @@ end
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-local UploadText_args = __TObject:new{
+UploadText_args = __TObject:new{
   req_id,
   text,
   carrier
@@ -424,7 +414,7 @@ function UploadText_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadText_result = __TObject:new{
+UploadText_result = __TObject:new{
   se
 }
 
@@ -460,7 +450,7 @@ function UploadText_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadMedia_args = __TObject:new{
+UploadMedia_args = __TObject:new{
   req_id,
   media,
   carrier
@@ -542,7 +532,7 @@ function UploadMedia_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadMedia_result = __TObject:new{
+UploadMedia_result = __TObject:new{
   se
 }
 
@@ -578,7 +568,7 @@ function UploadMedia_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUniqueId_args = __TObject:new{
+UploadUniqueId_args = __TObject:new{
   req_id,
   post_id,
   post_type,
@@ -661,7 +651,7 @@ function UploadUniqueId_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUniqueId_result = __TObject:new{
+UploadUniqueId_result = __TObject:new{
   se
 }
 
@@ -697,7 +687,7 @@ function UploadUniqueId_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadCreator_args = __TObject:new{
+UploadCreator_args = __TObject:new{
   req_id,
   creator,
   carrier
@@ -769,7 +759,7 @@ function UploadCreator_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadCreator_result = __TObject:new{
+UploadCreator_result = __TObject:new{
   se
 }
 
@@ -805,7 +795,7 @@ function UploadCreator_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUrls_args = __TObject:new{
+UploadUrls_args = __TObject:new{
   req_id,
   urls,
   carrier
@@ -887,7 +877,7 @@ function UploadUrls_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUrls_result = __TObject:new{
+UploadUrls_result = __TObject:new{
   se
 }
 
@@ -923,7 +913,7 @@ function UploadUrls_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUserMentions_args = __TObject:new{
+UploadUserMentions_args = __TObject:new{
   req_id,
   user_mentions,
   carrier
@@ -1005,7 +995,7 @@ function UploadUserMentions_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUserMentions_result = __TObject:new{
+UploadUserMentions_result = __TObject:new{
   se
 }
 

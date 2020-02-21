@@ -187,8 +187,8 @@ void swap(ServiceException &a, ServiceException &b);
 std::ostream& operator<<(std::ostream& out, const ServiceException& obj);
 
 typedef struct _Media__isset {
-  _Media__isset() : media_id(false), media_type(false) {}
-  bool media_id :1;
+  _Media__isset() : media(false), media_type(false) {}
+  bool media :1;
   bool media_type :1;
 } _Media__isset;
 
@@ -197,22 +197,22 @@ class Media : public virtual ::apache::thrift::TBase {
 
   Media(const Media&);
   Media& operator=(const Media&);
-  Media() : media_id(0), media_type() {
+  Media() : media(), media_type() {
   }
 
   virtual ~Media() throw();
-  int64_t media_id;
+  std::string media;
   std::string media_type;
 
   _Media__isset __isset;
 
-  void __set_media_id(const int64_t val);
+  void __set_media(const std::string& val);
 
   void __set_media_type(const std::string& val);
 
   bool operator == (const Media & rhs) const
   {
-    if (!(media_id == rhs.media_id))
+    if (!(media == rhs.media))
       return false;
     if (!(media_type == rhs.media_type))
       return false;

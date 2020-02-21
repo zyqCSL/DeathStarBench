@@ -6,10 +6,10 @@
 --
 
 
-local Thrift = require 'Thrift'
-local social_network_ttypes = require 'social_network_ttypes'
+require 'Thrift'
+require 'social_network_ttypes'
 
-local UserMentionServiceClient = __TObject.new(__TClient, {
+UserMentionServiceClient = __TObject.new(__TClient, {
   __type = 'UserMentionServiceClient'
 })
 
@@ -41,12 +41,12 @@ function UserMentionServiceClient:recv_UploadUserMentions(req_id, usernames, car
   result:read(self.iprot)
   self.iprot:readMessageEnd()
 end
-local UserMentionServiceIface = __TObject:new{
+UserMentionServiceIface = __TObject:new{
   __type = 'UserMentionServiceIface'
 }
 
 
-local UserMentionServiceProcessor = __TObject.new(__TProcessor
+UserMentionServiceProcessor = __TObject.new(__TProcessor
 , {
  __type = 'UserMentionServiceProcessor'
 })
@@ -92,7 +92,7 @@ end
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-local UploadUserMentions_args = __TObject:new{
+UploadUserMentions_args = __TObject:new{
   req_id,
   usernames,
   carrier
@@ -173,7 +173,7 @@ function UploadUserMentions_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUserMentions_result = __TObject:new{
+UploadUserMentions_result = __TObject:new{
   se
 }
 

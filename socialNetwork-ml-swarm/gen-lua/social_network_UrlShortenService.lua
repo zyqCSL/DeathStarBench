@@ -6,10 +6,10 @@
 --
 
 
-local Thrift = require 'Thrift'
-local social_network_ttypes = require 'social_network_ttypes'
+require 'Thrift'
+require 'social_network_ttypes'
 
-local UrlShortenServiceClient = __TObject.new(__TClient, {
+UrlShortenServiceClient = __TObject.new(__TClient, {
   __type = 'UrlShortenServiceClient'
 })
 
@@ -82,12 +82,12 @@ function UrlShortenServiceClient:recv_GetExtendedUrls(req_id, shortened_urls, ca
   end
   error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
 end
-local UrlShortenServiceIface = __TObject:new{
+UrlShortenServiceIface = __TObject:new{
   __type = 'UrlShortenServiceIface'
 }
 
 
-local UrlShortenServiceProcessor = __TObject.new(__TProcessor
+UrlShortenServiceProcessor = __TObject.new(__TProcessor
 , {
  __type = 'UrlShortenServiceProcessor'
 })
@@ -154,7 +154,7 @@ end
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-local UploadUrls_args = __TObject:new{
+UploadUrls_args = __TObject:new{
   req_id,
   urls,
   carrier
@@ -235,7 +235,7 @@ function UploadUrls_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUrls_result = __TObject:new{
+UploadUrls_result = __TObject:new{
   success,
   se
 }
@@ -293,7 +293,7 @@ function UploadUrls_result:write(oprot)
   oprot:writeStructEnd()
 end
 
-local GetExtendedUrls_args = __TObject:new{
+GetExtendedUrls_args = __TObject:new{
   req_id,
   shortened_urls,
   carrier
@@ -374,7 +374,7 @@ function GetExtendedUrls_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local GetExtendedUrls_result = __TObject:new{
+GetExtendedUrls_result = __TObject:new{
   success,
   se
 }

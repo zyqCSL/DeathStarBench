@@ -6,21 +6,93 @@
 --
 
 
-local Thrift = require 'Thrift'
-local TType = Thrift.TType
-local TMessageType = Thrift.TMessageType
-local __TObject = Thrift.__TObject
-local TApplicationException = Thrift.TApplicationException
-local __TClient = Thrift.__TClient
-local __TProcessor = Thrift.__TProcessor
-local ttype = Thrift.ttype
-local ttable_size = Thrift.ttable_size
-local social_network_ttypes = require 'social_network_ttypes'
-local ServiceException = social_network_ttypes.ServiceException
+require 'Thrift'
+require 'social_network_ttypes'
+
+UniqueIdServiceClient = __TObject.new(__TClient, {
+  __type = 'UniqueIdServiceClient'
+})
+
+function UniqueIdServiceClient:UploadUniqueId(req_id, post_type, carrier)
+  self:send_UploadUniqueId(req_id, post_type, carrier)
+  self:recv_UploadUniqueId(req_id, post_type, carrier)
+end
+
+function UniqueIdServiceClient:send_UploadUniqueId(req_id, post_type, carrier)
+  self.oprot:writeMessageBegin('UploadUniqueId', TMessageType.CALL, self._seqid)
+  local args = UploadUniqueId_args:new{}
+  args.req_id = req_id
+  args.post_type = post_type
+  args.carrier = carrier
+  args:write(self.oprot)
+  self.oprot:writeMessageEnd()
+  self.oprot.trans:flush()
+end
+
+function UniqueIdServiceClient:recv_UploadUniqueId(req_id, post_type, carrier)
+  local fname, mtype, rseqid = self.iprot:readMessageBegin()
+  if mtype == TMessageType.EXCEPTION then
+    local x = TApplicationException:new{}
+    x:read(self.iprot)
+    self.iprot:readMessageEnd()
+    error(x)
+  end
+  local result = UploadUniqueId_result:new{}
+  result:read(self.iprot)
+  self.iprot:readMessageEnd()
+end
+UniqueIdServiceIface = __TObject:new{
+  __type = 'UniqueIdServiceIface'
+}
+
+
+UniqueIdServiceProcessor = __TObject.new(__TProcessor
+, {
+ __type = 'UniqueIdServiceProcessor'
+})
+
+function UniqueIdServiceProcessor:process(iprot, oprot, server_ctx)
+  local name, mtype, seqid = iprot:readMessageBegin()
+  local func_name = 'process_' .. name
+  if not self[func_name] or ttype(self[func_name]) ~= 'function' then
+    iprot:skip(TType.STRUCT)
+    iprot:readMessageEnd()
+    x = TApplicationException:new{
+      errorCode = TApplicationException.UNKNOWN_METHOD
+    }
+    oprot:writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
+    x:write(oprot)
+    oprot:writeMessageEnd()
+    oprot.trans:flush()
+  else
+    self[func_name](self, seqid, iprot, oprot, server_ctx)
+  end
+end
+
+function UniqueIdServiceProcessor:process_UploadUniqueId(seqid, iprot, oprot, server_ctx)
+  local args = UploadUniqueId_args:new{}
+  local reply_type = TMessageType.REPLY
+  args:read(iprot)
+  iprot:readMessageEnd()
+  local result = UploadUniqueId_result:new{}
+  local status, res = pcall(self.handler.UploadUniqueId, self.handler, args.req_id, args.post_type, args.carrier)
+  if not status then
+    reply_type = TMessageType.EXCEPTION
+    result = TApplicationException:new{message = res}
+  elseif ttype(res) == 'ServiceException' then
+    result.se = res
+  else
+    result.success = res
+  end
+  oprot:writeMessageBegin('UploadUniqueId', reply_type, seqid)
+  result:write(oprot)
+  oprot:writeMessageEnd()
+  oprot.trans:flush()
+end
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-local UploadUniqueId_args = __TObject:new{
+UploadUniqueId_args = __TObject:new{
   req_id,
   post_type,
   carrier
@@ -91,7 +163,7 @@ function UploadUniqueId_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-local UploadUniqueId_result = __TObject:new{
+UploadUniqueId_result = __TObject:new{
   se
 }
 
@@ -126,87 +198,3 @@ function UploadUniqueId_result:write(oprot)
   oprot:writeFieldStop()
   oprot:writeStructEnd()
 end
-
-
-local UniqueIdServiceClient = __TObject.new(__TClient, {
-  __type = 'UniqueIdServiceClient'
-})
-
-function UniqueIdServiceClient:UploadUniqueId(req_id, post_type, carrier)
-  self:send_UploadUniqueId(req_id, post_type, carrier)
-  self:recv_UploadUniqueId(req_id, post_type, carrier)
-end
-
-function UniqueIdServiceClient:send_UploadUniqueId(req_id, post_type, carrier)
-  self.oprot:writeMessageBegin('UploadUniqueId', TMessageType.CALL, self._seqid)
-  local args = UploadUniqueId_args:new{}
-  args.req_id = req_id
-  args.post_type = post_type
-  args.carrier = carrier
-  args:write(self.oprot)
-  self.oprot:writeMessageEnd()
-  self.oprot.trans:flush()
-end
-
-function UniqueIdServiceClient:recv_UploadUniqueId(req_id, post_type, carrier)
-  local fname, mtype, rseqid = self.iprot:readMessageBegin()
-  if mtype == TMessageType.EXCEPTION then
-    local x = TApplicationException:new{}
-    x:read(self.iprot)
-    self.iprot:readMessageEnd()
-    error(x)
-  end
-  local result = UploadUniqueId_result:new{}
-  result:read(self.iprot)
-  self.iprot:readMessageEnd()
-end
-local UniqueIdServiceIface = __TObject:new{
-  __type = 'UniqueIdServiceIface'
-}
-
-
-local UniqueIdServiceProcessor = __TObject.new(__TProcessor
-, {
- __type = 'UniqueIdServiceProcessor'
-})
-
-function UniqueIdServiceProcessor:process(iprot, oprot, server_ctx)
-  local name, mtype, seqid = iprot:readMessageBegin()
-  local func_name = 'process_' .. name
-  if not self[func_name] or ttype(self[func_name]) ~= 'function' then
-    iprot:skip(TType.STRUCT)
-    iprot:readMessageEnd()
-    x = TApplicationException:new{
-      errorCode = TApplicationException.UNKNOWN_METHOD
-    }
-    oprot:writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
-    x:write(oprot)
-    oprot:writeMessageEnd()
-    oprot.trans:flush()
-  else
-    self[func_name](self, seqid, iprot, oprot, server_ctx)
-  end
-end
-
-function UniqueIdServiceProcessor:process_UploadUniqueId(seqid, iprot, oprot, server_ctx)
-  local args = UploadUniqueId_args:new{}
-  local reply_type = TMessageType.REPLY
-  args:read(iprot)
-  iprot:readMessageEnd()
-  local result = UploadUniqueId_result:new{}
-  local status, res = pcall(self.handler.UploadUniqueId, self.handler, args.req_id, args.post_type, args.carrier)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  elseif ttype(res) == 'ServiceException' then
-    result.se = res
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('UploadUniqueId', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
-end
-
-return UniqueIdServiceClient

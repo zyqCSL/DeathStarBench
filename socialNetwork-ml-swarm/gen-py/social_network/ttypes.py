@@ -256,14 +256,14 @@ class ServiceException(TException):
 class Media(object):
     """
     Attributes:
-     - media_id
+     - media
      - media_type
 
     """
 
 
-    def __init__(self, media_id=None, media_type=None,):
-        self.media_id = media_id
+    def __init__(self, media=None, media_type=None,):
+        self.media = media
         self.media_type = media_type
 
     def read(self, iprot):
@@ -276,8 +276,8 @@ class Media(object):
             if ftype == TType.STOP:
                 break
             if fid == 1:
-                if ftype == TType.I64:
-                    self.media_id = iprot.readI64()
+                if ftype == TType.STRING:
+                    self.media = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 2:
@@ -295,9 +295,9 @@ class Media(object):
             oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
             return
         oprot.writeStructBegin('Media')
-        if self.media_id is not None:
-            oprot.writeFieldBegin('media_id', TType.I64, 1)
-            oprot.writeI64(self.media_id)
+        if self.media is not None:
+            oprot.writeFieldBegin('media', TType.STRING, 1)
+            oprot.writeString(self.media.encode('utf-8') if sys.version_info[0] == 2 else self.media)
             oprot.writeFieldEnd()
         if self.media_type is not None:
             oprot.writeFieldBegin('media_type', TType.STRING, 2)
@@ -715,7 +715,7 @@ ServiceException.thrift_spec = (
 all_structs.append(Media)
 Media.thrift_spec = (
     None,  # 0
-    (1, TType.I64, 'media_id', None, None, ),  # 1
+    (1, TType.STRING, 'media', 'UTF8', None, ),  # 1
     (2, TType.STRING, 'media_type', 'UTF8', None, ),  # 2
 )
 all_structs.append(Url)

@@ -9,16 +9,16 @@
 require 'Thrift'
 require 'social_network_ttypes'
 
-MediaServiceClient = __TObject.new(__TClient, {
-  __type = 'MediaServiceClient'
+MediaFilterServiceClient = __TObject.new(__TClient, {
+  __type = 'MediaFilterServiceClient'
 })
 
-function MediaServiceClient:UploadMedia(req_id, media_types, medium, carrier)
+function MediaFilterServiceClient:UploadMedia(req_id, media_types, medium, carrier)
   self:send_UploadMedia(req_id, media_types, medium, carrier)
-  self:recv_UploadMedia(req_id, media_types, medium, carrier)
+  return self:recv_UploadMedia(req_id, media_types, medium, carrier)
 end
 
-function MediaServiceClient:send_UploadMedia(req_id, media_types, medium, carrier)
+function MediaFilterServiceClient:send_UploadMedia(req_id, media_types, medium, carrier)
   self.oprot:writeMessageBegin('UploadMedia', TMessageType.CALL, self._seqid)
   local args = UploadMedia_args:new{}
   args.req_id = req_id
@@ -30,7 +30,7 @@ function MediaServiceClient:send_UploadMedia(req_id, media_types, medium, carrie
   self.oprot.trans:flush()
 end
 
-function MediaServiceClient:recv_UploadMedia(req_id, media_types, medium, carrier)
+function MediaFilterServiceClient:recv_UploadMedia(req_id, media_types, medium, carrier)
   local fname, mtype, rseqid = self.iprot:readMessageBegin()
   if mtype == TMessageType.EXCEPTION then
     local x = TApplicationException:new{}
@@ -41,18 +41,24 @@ function MediaServiceClient:recv_UploadMedia(req_id, media_types, medium, carrie
   local result = UploadMedia_result:new{}
   result:read(self.iprot)
   self.iprot:readMessageEnd()
+  if result.success ~= nil then
+    return result.success
+  elseif result.se then
+    error(result.se)
+  end
+  error(TApplicationException:new{errorCode = TApplicationException.MISSING_RESULT})
 end
-MediaServiceIface = __TObject:new{
-  __type = 'MediaServiceIface'
+MediaFilterServiceIface = __TObject:new{
+  __type = 'MediaFilterServiceIface'
 }
 
 
-MediaServiceProcessor = __TObject.new(__TProcessor
+MediaFilterServiceProcessor = __TObject.new(__TProcessor
 , {
- __type = 'MediaServiceProcessor'
+ __type = 'MediaFilterServiceProcessor'
 })
 
-function MediaServiceProcessor:process(iprot, oprot, server_ctx)
+function MediaFilterServiceProcessor:process(iprot, oprot, server_ctx)
   local name, mtype, seqid = iprot:readMessageBegin()
   local func_name = 'process_' .. name
   if not self[func_name] or ttype(self[func_name]) ~= 'function' then
@@ -70,7 +76,7 @@ function MediaServiceProcessor:process(iprot, oprot, server_ctx)
   end
 end
 
-function MediaServiceProcessor:process_UploadMedia(seqid, iprot, oprot, server_ctx)
+function MediaFilterServiceProcessor:process_UploadMedia(seqid, iprot, oprot, server_ctx)
   local args = UploadMedia_args:new{}
   local reply_type = TMessageType.REPLY
   args:read(iprot)
@@ -115,10 +121,10 @@ function UploadMedia_args:read(iprot)
     elseif fid == 2 then
       if ftype == TType.LIST then
         self.media_types = {}
-        local _etype345, _size342 = iprot:readListBegin()
-        for _i=1,_size342 do
-          local _elem346 = iprot:readString()
-          table.insert(self.media_types, _elem346)
+        local _etype365, _size362 = iprot:readListBegin()
+        for _i=1,_size362 do
+          local _elem366 = iprot:readString()
+          table.insert(self.media_types, _elem366)
         end
         iprot:readListEnd()
       else
@@ -127,10 +133,10 @@ function UploadMedia_args:read(iprot)
     elseif fid == 3 then
       if ftype == TType.LIST then
         self.medium = {}
-        local _etype350, _size347 = iprot:readListBegin()
-        for _i=1,_size347 do
-          local _elem351 = iprot:readString()
-          table.insert(self.medium, _elem351)
+        local _etype370, _size367 = iprot:readListBegin()
+        for _i=1,_size367 do
+          local _elem371 = iprot:readString()
+          table.insert(self.medium, _elem371)
         end
         iprot:readListEnd()
       else
@@ -139,11 +145,11 @@ function UploadMedia_args:read(iprot)
     elseif fid == 4 then
       if ftype == TType.MAP then
         self.carrier = {}
-        local _ktype353, _vtype354, _size352 = iprot:readMapBegin() 
-        for _i=1,_size352 do
-          local _key356 = iprot:readString()
-          local _val357 = iprot:readString()
-          self.carrier[_key356] = _val357
+        local _ktype373, _vtype374, _size372 = iprot:readMapBegin() 
+        for _i=1,_size372 do
+          local _key376 = iprot:readString()
+          local _val377 = iprot:readString()
+          self.carrier[_key376] = _val377
         end
         iprot:readMapEnd()
       else
@@ -167,8 +173,8 @@ function UploadMedia_args:write(oprot)
   if self.media_types ~= nil then
     oprot:writeFieldBegin('media_types', TType.LIST, 2)
     oprot:writeListBegin(TType.STRING, #self.media_types)
-    for _,iter358 in ipairs(self.media_types) do
-      oprot:writeString(iter358)
+    for _,iter378 in ipairs(self.media_types) do
+      oprot:writeString(iter378)
     end
     oprot:writeListEnd()
     oprot:writeFieldEnd()
@@ -176,8 +182,8 @@ function UploadMedia_args:write(oprot)
   if self.medium ~= nil then
     oprot:writeFieldBegin('medium', TType.LIST, 3)
     oprot:writeListBegin(TType.STRING, #self.medium)
-    for _,iter359 in ipairs(self.medium) do
-      oprot:writeString(iter359)
+    for _,iter379 in ipairs(self.medium) do
+      oprot:writeString(iter379)
     end
     oprot:writeListEnd()
     oprot:writeFieldEnd()
@@ -185,9 +191,9 @@ function UploadMedia_args:write(oprot)
   if self.carrier ~= nil then
     oprot:writeFieldBegin('carrier', TType.MAP, 4)
     oprot:writeMapBegin(TType.STRING, TType.STRING, ttable_size(self.carrier))
-    for kiter360,viter361 in pairs(self.carrier) do
-      oprot:writeString(kiter360)
-      oprot:writeString(viter361)
+    for kiter380,viter381 in pairs(self.carrier) do
+      oprot:writeString(kiter380)
+      oprot:writeString(viter381)
     end
     oprot:writeMapEnd()
     oprot:writeFieldEnd()
@@ -197,6 +203,7 @@ function UploadMedia_args:write(oprot)
 end
 
 UploadMedia_result = __TObject:new{
+  success,
   se
 }
 
@@ -206,6 +213,18 @@ function UploadMedia_result:read(iprot)
     local fname, ftype, fid = iprot:readFieldBegin()
     if ftype == TType.STOP then
       break
+    elseif fid == 0 then
+      if ftype == TType.LIST then
+        self.success = {}
+        local _etype385, _size382 = iprot:readListBegin()
+        for _i=1,_size382 do
+          local _elem386 = iprot:readBool()
+          table.insert(self.success, _elem386)
+        end
+        iprot:readListEnd()
+      else
+        iprot:skip(ftype)
+      end
     elseif fid == 1 then
       if ftype == TType.STRUCT then
         self.se = ServiceException:new{}
@@ -223,6 +242,15 @@ end
 
 function UploadMedia_result:write(oprot)
   oprot:writeStructBegin('UploadMedia_result')
+  if self.success ~= nil then
+    oprot:writeFieldBegin('success', TType.LIST, 0)
+    oprot:writeListBegin(TType.BOOL, #self.success)
+    for _,iter387 in ipairs(self.success) do
+      oprot:writeBool(iter387)
+    end
+    oprot:writeListEnd()
+    oprot:writeFieldEnd()
+  end
   if self.se ~= nil then
     oprot:writeFieldBegin('se', TType.STRUCT, 1)
     self.se:write(oprot)
