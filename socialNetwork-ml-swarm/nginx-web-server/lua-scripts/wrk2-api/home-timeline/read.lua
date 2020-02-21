@@ -24,7 +24,7 @@ local function _LoadTimeline(data)
     new_post["media"] = {}
     for _, media in ipairs(timeline_post.media) do
       local new_media = {}
-      new_media["media_id"] = tostring(media.media_id)
+      new_media["media"] = tostring(media.media)
       new_media["media_type"] = media.media_type
       table.insert(new_post["media"], new_media)
     end

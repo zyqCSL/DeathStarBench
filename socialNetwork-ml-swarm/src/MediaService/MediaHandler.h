@@ -51,7 +51,7 @@ MediaHandler::MediaHandler(
 void MediaHandler::UploadMedia(
     int64_t req_id,
     const std::vector<std::string> &media_types,
-    const std::vector<int64_t> &media_ids,
+    const std::vector<std::string> &medium,
     const std::map<std::string, std::string> &carrier) {
 
   // Initialize a span
@@ -64,7 +64,7 @@ void MediaHandler::UploadMedia(
       { opentracing::ChildOf(parent_span->get()) });
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
-  if (media_types.size() != media_ids.size()) {
+  if (media_types.size() != medium.size()) {
     ServiceException se;
     se.errorCode = ErrorCode::SE_THRIFT_HANDLER_ERROR;
     se.message = "The lengths of media_id list and media_type list are not equal";
@@ -72,9 +72,9 @@ void MediaHandler::UploadMedia(
   }
 
   std::vector<Media> media;
-  for (int i = 0; i < media_ids.size(); ++i) {
+  for (int i = 0; i < medium.size(); ++i) {
     Media new_media;
-    new_media.media_id = media_ids[i];
+    new_media.media_id = medium[i];
     new_media.media_type = media_types[i];
     media.emplace_back(new_media);
   }

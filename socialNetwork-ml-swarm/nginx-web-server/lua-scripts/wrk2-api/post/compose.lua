@@ -91,9 +91,9 @@ local function _UploadMedia(req_id, post, carrier)
   local media_client = GenericObjectPool:connection(
       MediaServiceClient, "media-service", 9090)
   local status, err
-  if (not _StrIsEmpty(post.media_ids) and not _StrIsEmpty(post.media_types)) then
+  if (not _StrIsEmpty(post.medium) and not _StrIsEmpty(post.media_types)) then
     status, err = pcall(media_client.UploadMedia, media_client,
-        req_id, cjson.decode(post.media_types), cjson.decode(post.media_ids), carrier)
+        req_id, cjson.decode(post.media_types), cjson.decode(post.medium), carrier)
   else
     status, err = pcall(media_client.UploadMedia, media_client,
         req_id, {}, {}, carrier)

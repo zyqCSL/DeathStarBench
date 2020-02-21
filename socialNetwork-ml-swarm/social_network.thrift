@@ -35,7 +35,7 @@ enum PostType {
 }
 
 struct Media {
-  1: i64 media_id;
+  1: string media;
   2: string media_type;
 }
 
@@ -290,7 +290,7 @@ service MediaService {
   void UploadMedia(
       1: i64 req_id,
       2: list<string> media_types,
-      3: list<i64> media_ids,
+      3: list<string> media,
       4: map<string, string> carrier
   ) throws (1: ServiceException se)
 }
