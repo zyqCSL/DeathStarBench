@@ -1,0 +1,20 @@
+version: "3"
+services:
+
+  # Resolving container hostnames from host machine
+  # CAUTION: could affect host machine networking
+#  dns-social-network:
+#    image: defreitas/dns-proxy-server
+#    volumes:
+#      - /opt/dns-proxy-server/conf:/app/conf
+#      - /var/run/docker.sock:/var/run/docker.sock
+#      - /etc/resolv.conf:/etc/resolv.conf
+
+  train-text-filter:
+    image: yz2297/train-text-filter
+    # hostname: text-filter-service
+    container_name: train-text-filter
+    volumes:
+      - /home/yz2297/Software/deathstar_suite/socialNetwork-ml-swarm/ml_components/model:/model
+    #restart: always
+    # entrypoint: SocialGraphService

@@ -8,3 +8,4 @@ ssh -t yz2297@ath-1 'cd /home/yz2297/Software/deathstar_suite/socialNetwork-dist
 # docker build --no-cache -f ./TextFilterDockerfile -t yz2297/social-network-text-filer .
 # docker build --no-cache -f ./Dockerfile -t yz2297/social-network-ml-swarm .
 # docker build --no-cache -f ./DebugTextFilterDockerfile -t yz2297/social-network-text-filer .
+# docker build -f ./DebugTextFilterDockerfile -t yz2297/social-network-text-filer .

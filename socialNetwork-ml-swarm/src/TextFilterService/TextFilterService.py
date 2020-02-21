@@ -23,15 +23,17 @@ from sklearn.externals import joblib
 
 class TextFilterServiceHandler:
     def __init__(self):
-        pass
+        # pass
         # test if parallel procecssing works
+        self.vectorizer = joblib.load('./data/vectorizer.joblib')
+        self.model = joblib.load('./data/model.joblib')
 
     def UploadText(self, req_id, text, carrier):
         # assume 1 text snippet in each post
         print 'recv text = ', text
-        vectorizer = joblib.load('./data/vectorizer.joblib')
-        model = joblib.load('./data/model.joblib')
-        probs = model.predict(vectorizer.transform([text]))
+        # vectorizer = joblib.load('./data/vectorizer.joblib')
+        # model = joblib.load('./data/model.joblib')
+        probs = self.model.predict(self.vectorizer.transform([text]))
         return probs[0] < 0.5
 
 if __name__ == '__main__':
