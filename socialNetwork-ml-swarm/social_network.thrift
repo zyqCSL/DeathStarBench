@@ -290,7 +290,16 @@ service MediaService {
   void UploadMedia(
       1: i64 req_id,
       2: list<string> media_types,
-      3: list<string> media,
+      3: list<string> medium,
+      4: map<string, string> carrier
+  ) throws (1: ServiceException se)
+}
+
+service MediaFilterService {
+  list<bool> UploadMedia(
+      1: i64 req_id,
+      2: list<string> media_types,
+      3: list<string> medium,
       4: map<string, string> carrier
   ) throws (1: ServiceException se)
 }
