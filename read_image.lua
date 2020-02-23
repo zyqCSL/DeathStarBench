@@ -34,5 +34,6 @@ end
 dir = "/home/zhangyanqi/cornell/Software/socialNetwork-ml-swarm/DeathStarBench/socialNetwork-ml-swarm/wrk2/scripts/social-network/images/"
 
 f = io.open(dir .. '1.png', 'rb')
-media = f:read("*all")
-print(enc(media))
+media = enc(f:read("*all"))
+print(media)
+print(type(media))

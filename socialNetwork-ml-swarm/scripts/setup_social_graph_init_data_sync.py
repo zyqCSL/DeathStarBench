@@ -128,11 +128,11 @@ media_png_num = 15
 
 for i in range(1, media_jpg_num + 1):
   with open(media_dir + str(i) + '.jpg', 'rb') as f:
-    media_jpg[i] = base64.b64encode(f.read())
+    media_jpg[i] = str(base64.b64encode(f.read()))
 
 for i in range(1, media_png_num + 1):
   with open(media_dir + str(i) + '.png', 'rb') as f:
-    media_png[i] = base64.b64encode(f.read())
+    media_png[i] = str(base64.b64encode(f.read()))
 #----------------------------------------------#    
 
 def random_digits(length):
@@ -225,7 +225,7 @@ def compose_post_for_each(session, addr):
 
     # media
     num_media = 0
-    if random.random() < 0.2:
+    if random.random() < 0.9:
       num_media = random.randint(1,3)
 
     medium = '['
@@ -246,7 +246,7 @@ def compose_post_for_each(session, addr):
     print("New message text: ")
     print(user)
     print(text)
-    # print(medium)
+    print(medium)
     print(media_types)
     print('\n')
 
@@ -295,7 +295,7 @@ def compose_post(session, addr):
 
   # media
   num_media = 0
-  if random.random() < 0.2:
+  if random.random() < 0.9:
     num_media = random.randint(1,3)
   medium = '['
   media_types = '['
@@ -315,7 +315,7 @@ def compose_post(session, addr):
   print("New message text: ")
   print(user)
   print(text)
-  # print(medium)
+  print(medium)
   print(media_types)
   print('\n')
 
@@ -395,9 +395,9 @@ if __name__ == '__main__':
 
   # nginx is on ath-3
   # addr = "http://127.0.0.1:8080"
-  addr = "http://128.253.128.66:8080"
+  addr = "http://128.253.128.245:8080"
 
   register(addr, nodes)
   follow(addr, edges)
   compose_for_each(addr)
-  compose(addr, 5000)
+  compose(addr, 1000)

@@ -129,11 +129,11 @@ media_png_num = 15
 
 for i in range(1, media_jpg_num + 1):
   with open(media_dir + str(i) + '.jpg', 'rb') as f:
-    media_jpg[i] = base64.b64encode(f.read())
+    media_jpg[i] = str(base64.b64encode(f.read()))
 
 for i in range(1, media_png_num + 1):
   with open(media_dir + str(i) + '.png', 'rb') as f:
-    media_png[i] = base64.b64encode(f.read())
+    media_png[i] = str(base64.b64encode(f.read()))
 #----------------------------------------------#    
 
 def random_digits(length):
@@ -222,7 +222,7 @@ async def compose_post(session, addr):
 
   # media
   num_media = 0
-  if random.random() < 0.2:
+  if random.random() < 0.9:
     num_media = random.randint(1,3)
   medium = '['
   media_types = '['
