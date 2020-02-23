@@ -130,7 +130,20 @@ function _M.ComposePost()
   tracer:text_map_inject(span:context(), carrier)
 
   ngx.req.read_body()
-  local post = ngx.req.get_post_args()
+
+  -- debug starts --
+  local debug_data = ngx.req.get_body_data()
+  if debug_data then
+    ngx.say("body data:")
+    ngx.say(debug_data)
+  end
+  -- debug ends --
+
+  local post, err = ngx.req.get_post_args()
+  if err then
+    ngx.say("Error ngx.req.get_post_args():")
+    ngx.say(err)
+  end
 
   if (_StrIsEmpty(post.user_id) or _StrIsEmpty(post.username) or
       _StrIsEmpty(post.post_type) or _StrIsEmpty(post.text)) then

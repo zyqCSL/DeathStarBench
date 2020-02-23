@@ -16,6 +16,7 @@ for i in range(1, media_jpg_num + 1):
 			media = media[:-1]
 		media_jpg[i] = media
 		print(media_jpg[i])
+		print(str(i) + '.jpg cached')
 		print()
 
 for i in range(1, media_png_num + 1):
@@ -27,6 +28,7 @@ for i in range(1, media_png_num + 1):
 			media = media[:-1]
 		media_png[i] = media
 		print(media_png[i])
+		print(str(i) + '.png cached')
 		print()
 
 medium = '['
