@@ -134,8 +134,8 @@ function _M.ComposePost()
   -- debug starts --
   local debug_data = ngx.req.get_body_data()
   if debug_data then
-    ngx.log(ngx.INFO, "req_body_data:")
-    ngx.log(ngx.INFO, debug_data)
+    ngx.log(ngx.ERR, "req_body_data:")
+    ngx.log(ngx.ERR, debug_data)
   end
   -- debug ends --
 
