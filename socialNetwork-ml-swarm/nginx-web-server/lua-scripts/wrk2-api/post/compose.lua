@@ -134,15 +134,15 @@ function _M.ComposePost()
   -- debug starts --
   local debug_data = ngx.req.get_body_data()
   if debug_data then
-    ngx.say("body data:")
-    ngx.say(debug_data)
+    ngx.log(ngx.INFO, "req_body_data:")
+    ngx.log(ngx.INFO, debug_data)
   end
   -- debug ends --
 
   local post, err = ngx.req.get_post_args()
   if err then
-    ngx.say("Error ngx.req.get_post_args():")
-    ngx.say(err)
+    ngx.log(ngx.ERR, "Error ngx.req.get_post_args():")
+    ngx.log(ngx.ERR, err)
   end
 
   if (_StrIsEmpty(post.user_id) or _StrIsEmpty(post.username) or
