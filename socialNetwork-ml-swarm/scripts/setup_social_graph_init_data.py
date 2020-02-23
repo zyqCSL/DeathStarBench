@@ -129,11 +129,21 @@ media_png_num = 15
 
 for i in range(1, media_jpg_num + 1):
   with open(media_dir + str(i) + '.jpg', 'rb') as f:
-    media_jpg[i] = str(base64.b64encode(f.read()))
+    media = str(base64.b64encode(f.read()))
+    if media.startswith("b\'"):
+      media = media[2:]
+    if media[-1] == "\'":
+      media = media[:-1]
+    media_jpg[i] = media
 
 for i in range(1, media_png_num + 1):
   with open(media_dir + str(i) + '.png', 'rb') as f:
-    media_png[i] = str(base64.b64encode(f.read()))
+    media = str(base64.b64encode(f.read()))
+    if media.startswith("b\'"):
+      media = media[2:]
+    if media[-1] == "\'":
+      media = media[:-1]
+    media_png[i] = media
 #----------------------------------------------#    
 
 def random_digits(length):

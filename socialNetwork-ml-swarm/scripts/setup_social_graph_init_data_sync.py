@@ -128,11 +128,21 @@ media_png_num = 15
 
 for i in range(1, media_jpg_num + 1):
   with open(media_dir + str(i) + '.jpg', 'rb') as f:
-    media_jpg[i] = str(base64.b64encode(f.read()))
+    media = str(base64.b64encode(f.read()))
+    if media.startswith("b\'"):
+      media = media[2:]
+    if media[-1] == "\'":
+      media = media[:-1]
+    media_jpg[i] = media
 
 for i in range(1, media_png_num + 1):
   with open(media_dir + str(i) + '.png', 'rb') as f:
-    media_png[i] = str(base64.b64encode(f.read()))
+    media = str(base64.b64encode(f.read()))
+    if media.startswith("b\'"):
+      media = media[2:]
+    if media[-1] == "\'":
+      media = media[:-1]
+    media_png[i] = media
 #----------------------------------------------#    
 
 def random_digits(length):
@@ -225,28 +235,33 @@ def compose_post_for_each(session, addr):
 
     # media
     num_media = 0
-    if random.random() < 0.9:
+    if random.random() < 1.0:
       num_media = random.randint(1,3)
+      print("num_media: " + str(num_media))
 
     medium = '['
     media_types = '['
+    media_ids = []
     for i in range(0, num_media):
       media_coin = random.randint(1, media_jpg_num + media_png_num)
       if media_coin < media_jpg_num:
         media_id = random.randint(1, media_jpg_num)
         medium += '\"' + media_jpg[media_id] + '\",'
         media_types += '\"jpg\",'
+        media_ids.append(str(media_id) + ".jpg")
       else:
         media_id = random.randint(1, media_png_num)
         medium += '\"' + media_png[media_id] + '\",'
         media_types += '\"png\",'
+        media_ids.append(str(media_id) + ".png")
     medium = medium[:-1] + ']'
     media_types = media_types[:-1] + ']'
 
     print("New message text: ")
     print(user)
     print(text)
-    print(medium)
+    # print(medium)
+    print(','.join(media_ids))
     print(media_types)
     print('\n')
 
@@ -295,27 +310,31 @@ def compose_post(session, addr):
 
   # media
   num_media = 0
-  if random.random() < 0.9:
+  if random.random() < 1.0:
     num_media = random.randint(1,3)
   medium = '['
   media_types = '['
+  media_ids = []
   for i in range(0, num_media):
     media_coin = random.randint(1, media_jpg_num + media_png_num)
     if media_coin < media_jpg_num:
       media_id = random.randint(1, media_jpg_num)
       medium += '\"' + media_jpg[media_id] + '\",'
       media_types += '\"jpg\",'
+      media_ids.append(str(media_id) + ".jpg")
     else:
       media_id = random.randint(1, media_png_num)
       medium += '\"' + media_png[media_id] + '\",'
       media_types += '\"png\",'
+      media_ids.append(str(media_id) + ".png")
   medium = medium[:-1] + ']'
   media_types = media_types[:-1] + ']'
 
   print("New message text: ")
   print(user)
   print(text)
-  print(medium)
+  # print(medium)
+  print(','.join(media_ids))
   print(media_types)
   print('\n')
 

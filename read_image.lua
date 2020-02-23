@@ -31,9 +31,56 @@ function dec(data)
     end))
 end
 
-dir = "/home/zhangyanqi/cornell/Software/socialNetwork-ml-swarm/DeathStarBench/socialNetwork-ml-swarm/wrk2/scripts/social-network/images/"
+media_dir = "/home/zhangyanqi/cornell/Software/socialNetwork-ml-swarm/DeathStarBench/socialNetwork-ml-swarm/wrk2/scripts/social-network/images/"
 
-f = io.open(dir .. '1.png', 'rb')
-media = enc(f:read("*all"))
-print(media)
-print(type(media))
+
+media_jpg = {}
+media_jpg_num = 17
+media_png  = {}
+media_png_num = 15
+
+for i = 1, media_jpg_num do
+  f = io.open(media_dir .. tostring(i) .. ".jpg", "rb")
+  if f then 
+    -- local temp = f:read("*all")
+    -- ocr_img_jpg[i] = mime.b64(temp)
+    media_jpg[i] = enc(f:read("*all"))
+    print(media_jpg[i])
+    print()
+    f:close()
+    print(media_dir .. tostring(i) .. ".jpg cached")
+  else
+    print(media_dir .. tostring(i) .. ".jpg doesn't exist")
+  end
+end 
+
+for i = 1, media_png_num do 
+  f = io.open(media_dir .. tostring(i) .. ".png", "rb")
+  if f then 
+    -- local temp = f:read("*all")
+    -- ocr_img_png[i] = mime.b64(temp)
+    media_png[i] = enc(f:read("*all"))
+    print(media_png[i])
+    print()
+    f:close()
+    print(media_dir .. tostring(i) .. ".png cached")
+  else
+    print(media_dir .. tostring(i) .. ".png doesn't exist")
+  end
+end
+
+-- compose a medium array
+
+medium = '['
+media_types = '['
+
+for i = 0, 3, 1 do
+	media_id = math.random(1, media_jpg_num)
+	medium = medium .. "\"" .. media_jpg[media_id] .. "\","
+	media_types = media_types .. "\"jpg\","
+end
+
+medium = medium:sub(1, #medium - 1) .. "]"
+media_types = media_types:sub(1, #media_types - 1) .. "]"
+print(medium)
+print(media_types)
