@@ -34,7 +34,8 @@ function dec(data)
     end))
 end
 
-media_dir = "/home/yanqi/wrk2/scripts/social-network/images/"
+benchmark_dir = "/home/yz2297/Software/deathstar_suite/socialNetwork-ml-swarm/DeathStarBench/socialNetwork-ml-swarm"
+media_dir = benchmark_dir .. "/images/"
 media_jpg = {}
 media_jpg_num = 17
 media_png  = {}
