@@ -164,6 +164,7 @@ void ComposePostHandler::UploadText(
     const std::string &text,
     const std::map<std::string, std::string> &carrier) {
 
+  std::cout << "recv text: " << text << std::endl;
   // Initialize a span
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;

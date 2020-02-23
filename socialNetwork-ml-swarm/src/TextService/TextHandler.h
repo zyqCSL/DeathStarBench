@@ -172,6 +172,7 @@ void TextHandler::UploadText(
     throw;
   }
 
+  std::cout << "text = " << text << std::endl;
   std::cout << "text_filter = " << text_filter << std::endl;
 
   std::string updated_text;
@@ -190,6 +191,8 @@ void TextHandler::UploadText(
   } else {
     updated_text = text;
   }
+
+  std::cout << "updated_text = " << updated_text << std::endl;
 
   std::future<void> upload_text_future = std::async(
       std::launch::async, [&]() {
