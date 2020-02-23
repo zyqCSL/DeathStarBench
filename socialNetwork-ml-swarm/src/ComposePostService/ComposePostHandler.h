@@ -226,7 +226,7 @@ void ComposePostHandler::UploadMedia(
   std::string media_str = "[";
   if (!media.empty()) {
     for (auto &item : media) {
-      media_str += "{\"media_id\": " + std::to_string(item.media_id) +
+      media_str += "{\"media\": " + std::to_string(item.media) +
           ", \"media_type\": \"" + item.media_type + "\"},";
     }
     media_str.pop_back();
@@ -530,7 +530,7 @@ void ComposePostHandler::_ComposeAndUpload(
   json media_json = json::parse(media_reply.as_string());
   for (auto &item : media_json) {
     Media media;
-    media.media_id = item["media_id"];
+    media.media = item["media"];
     media.media_type = item["media_type"];
     post.media.emplace_back(media);
   }

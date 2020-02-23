@@ -10,6 +10,71 @@ local charset = {'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's',
 
 local decset = {'1', '2', '3', '4', '5', '6', '7', '8', '9', '0'}
 
+------ media data ---------
+local b='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/' -- You will need this for encoding/decoding
+-- encoding
+function enc(data)
+    return ((data:gsub('.', function(x) 
+        local r,b='',x:byte()
+        for i=8,1,-1 do r=r..(b%2^i-b%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end)..'0000'):gsub('%d%d%d?%d?%d?%d?', function(x)
+        if (#x < 6) then return '' end
+        local c=0
+        for i=1,6 do c=c+(x:sub(i,i)=='1' and 2^(6-i) or 0) end
+        return b:sub(c+1,c+1)
+    end)..({ '', '==', '=' })[#data%3+1])
+end
+
+-- decoding
+function dec(data)
+    data = string.gsub(data, '[^'..b..'=]', '')
+    return (data:gsub('.', function(x)
+        if (x == '=') then return '' end
+        local r,f='',(b:find(x)-1)
+        for i=6,1,-1 do r=r..(f%2^i-f%2^(i-1)>0 and '1' or '0') end
+        return r;
+    end):gsub('%d%d%d?%d?%d?%d?%d?%d?', function(x)
+        if (#x ~= 8) then return '' end
+        local c=0
+        for i=1,8 do c=c+(x:sub(i,i)=='1' and 2^(8-i) or 0) end
+            return string.char(c)
+    end))
+end
+
+media_dir = "/home/yanqi/wrk2/scripts/social-network/images/"
+media_jpg = {}
+media_jpg_num = 17
+media_png  = {}
+media_png_num = 15
+
+for i = 1, media_jpg_num do
+  f = io.open(media_dir .. tostring(i) .. ".jpg", "rb")
+  if f then 
+    -- local temp = f:read("*all")
+    -- ocr_img_jpg[i] = mime.b64(temp)
+    media_jpg[i] = enc(f:read("*all"))
+    f:close()
+    print(media_dir .. tostring(i) .. ".jpg cached")
+  else
+    print(media_dir .. tostring(i) .. ".jpg doesn't exist")
+  end
+end 
+
+for i = 1, media_png_num do 
+  f = io.open(media_dir .. tostring(i) .. ".png", "rb")
+  if f then 
+    -- local temp = f:read("*all")
+    -- ocr_img_png[i] = mime.b64(temp)
+    media_png[i] = enc(f:read("*all"))
+    f:close()
+    print(media_dir .. tostring(i) .. ".png cached")
+  else
+    print(media_dir .. tostring(i) .. ".png doesn't exist")
+  end
+end
+--------------------------
+
 local function stringRandom(length)
   if length > 0 then
     return stringRandom(length - 1) .. charset[math.random(1, #charset)]
@@ -34,9 +99,15 @@ request = function()
   local text = stringRandom(256)
   local num_user_mentions = math.random(0, 5)
   local num_urls = math.random(0, 5)
-  local num_media = math.random(0, 4)
-  local media_ids = '['
+  -- local num_media = math.random(0, 4)
+  local num_media = 0
+  local medium = '['
   local media_types = '['
+
+  -- decide if image is included
+  if math.random() < 0.2 then
+    num_media = math.random(1, 3)
+  end
 
   for i = 0, num_user_mentions, 1 do
     local user_mention_id
@@ -54,12 +125,19 @@ request = function()
   end
 
   for i = 0, num_media, 1 do
-    local media_id = decRandom(18)
-    media_ids = media_ids .. "\"" .. media_id .. "\","
-    media_types = media_types .. "\"png\","
+    coin = math.random(1, media_jpg_num + media_png_num)
+    if coin <= media_jpg_num then
+      local media_id = math.random(1, media_jpg_num)
+      medium = medium .. "\"" .. media_jpg[media_id] .. "\","
+      media_types = media_types .. "\"jpg\","
+    else
+      local media_id = math.random(1, media_png_num)
+      medium = medium .. "\"" .. media_png[media_id] .. "\","
+      media_types = media_types .. "\"png\","
+    end
   end
 
-  media_ids = media_ids:sub(1, #media_ids - 1) .. "]"
+  medium = medium:sub(1, #medium - 1) .. "]"
   media_types = media_types:sub(1, #media_types - 1) .. "]"
 
   local method = "POST"
@@ -69,11 +147,11 @@ request = function()
   headers["Content-Type"] = "application/x-www-form-urlencoded"
   if num_media then
     body   = "username=" .. username .. "&user_id=" .. user_id ..
-        "&text=" .. text .. "&media_ids=" .. media_ids ..
+        "&text=" .. text .. "&medium=" .. medium ..
         "&media_types=" .. media_types .. "&post_type=0"
   else
     body   = "username=" .. username .. "&user_id=" .. user_id ..
-        "&text=" .. text .. "&media_ids=" .. "&post_type=0"
+        "&text=" .. text .. "&medium=" .. "&post_type=0"
   end
 
   return wrk.format(method, path, headers, body)

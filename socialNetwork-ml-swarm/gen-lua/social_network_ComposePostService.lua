@@ -6,10 +6,20 @@
 --
 
 
-require 'Thrift'
-require 'social_network_ttypes'
+local Thrift = require 'Thrift'
+local TType = Thrift.TType
+local TMessageType = Thrift.TMessageType
+local __TObject = Thrift.__TObject
+local TApplicationException = Thrift.TApplicationException
+local __TClient = Thrift.__TClient
+local __TProcessor = Thrift.__TProcessor
+local ttype = Thrift.ttype
+local ttable_size = Thrift.ttable_size
+local social_network_ttypes = require 'social_network_ttypes'
+local ServiceException = social_network_ttypes.ServiceException
+local Post = social_network_ttypes.Post
 
-ComposePostServiceClient = __TObject.new(__TClient, {
+local ComposePostServiceClient = __TObject.new(__TClient, {
   __type = 'ComposePostServiceClient'
 })
 
@@ -187,12 +197,12 @@ function ComposePostServiceClient:recv_UploadUserMentions(req_id, user_mentions,
   result:read(self.iprot)
   self.iprot:readMessageEnd()
 end
-ComposePostServiceIface = __TObject:new{
+local ComposePostServiceIface = __TObject:new{
   __type = 'ComposePostServiceIface'
 }
 
 
-ComposePostServiceProcessor = __TObject.new(__TProcessor
+local ComposePostServiceProcessor = __TObject.new(__TProcessor
 , {
  __type = 'ComposePostServiceProcessor'
 })
@@ -343,7 +353,7 @@ end
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-UploadText_args = __TObject:new{
+local UploadText_args = __TObject:new{
   req_id,
   text,
   carrier
@@ -995,7 +1005,7 @@ function UploadUserMentions_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-UploadUserMentions_result = __TObject:new{
+local UploadUserMentions_result = __TObject:new{
   se
 }
 

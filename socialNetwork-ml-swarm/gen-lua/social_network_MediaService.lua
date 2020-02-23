@@ -6,94 +6,21 @@
 --
 
 
-require 'Thrift'
-require 'social_network_ttypes'
-
-MediaServiceClient = __TObject.new(__TClient, {
-  __type = 'MediaServiceClient'
-})
-
-function MediaServiceClient:UploadMedia(req_id, media_types, medium, carrier)
-  self:send_UploadMedia(req_id, media_types, medium, carrier)
-  self:recv_UploadMedia(req_id, media_types, medium, carrier)
-end
-
-function MediaServiceClient:send_UploadMedia(req_id, media_types, medium, carrier)
-  self.oprot:writeMessageBegin('UploadMedia', TMessageType.CALL, self._seqid)
-  local args = UploadMedia_args:new{}
-  args.req_id = req_id
-  args.media_types = media_types
-  args.medium = medium
-  args.carrier = carrier
-  args:write(self.oprot)
-  self.oprot:writeMessageEnd()
-  self.oprot.trans:flush()
-end
-
-function MediaServiceClient:recv_UploadMedia(req_id, media_types, medium, carrier)
-  local fname, mtype, rseqid = self.iprot:readMessageBegin()
-  if mtype == TMessageType.EXCEPTION then
-    local x = TApplicationException:new{}
-    x:read(self.iprot)
-    self.iprot:readMessageEnd()
-    error(x)
-  end
-  local result = UploadMedia_result:new{}
-  result:read(self.iprot)
-  self.iprot:readMessageEnd()
-end
-MediaServiceIface = __TObject:new{
-  __type = 'MediaServiceIface'
-}
-
-
-MediaServiceProcessor = __TObject.new(__TProcessor
-, {
- __type = 'MediaServiceProcessor'
-})
-
-function MediaServiceProcessor:process(iprot, oprot, server_ctx)
-  local name, mtype, seqid = iprot:readMessageBegin()
-  local func_name = 'process_' .. name
-  if not self[func_name] or ttype(self[func_name]) ~= 'function' then
-    iprot:skip(TType.STRUCT)
-    iprot:readMessageEnd()
-    x = TApplicationException:new{
-      errorCode = TApplicationException.UNKNOWN_METHOD
-    }
-    oprot:writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
-    x:write(oprot)
-    oprot:writeMessageEnd()
-    oprot.trans:flush()
-  else
-    self[func_name](self, seqid, iprot, oprot, server_ctx)
-  end
-end
-
-function MediaServiceProcessor:process_UploadMedia(seqid, iprot, oprot, server_ctx)
-  local args = UploadMedia_args:new{}
-  local reply_type = TMessageType.REPLY
-  args:read(iprot)
-  iprot:readMessageEnd()
-  local result = UploadMedia_result:new{}
-  local status, res = pcall(self.handler.UploadMedia, self.handler, args.req_id, args.media_types, args.medium, args.carrier)
-  if not status then
-    reply_type = TMessageType.EXCEPTION
-    result = TApplicationException:new{message = res}
-  elseif ttype(res) == 'ServiceException' then
-    result.se = res
-  else
-    result.success = res
-  end
-  oprot:writeMessageBegin('UploadMedia', reply_type, seqid)
-  result:write(oprot)
-  oprot:writeMessageEnd()
-  oprot.trans:flush()
-end
+local Thrift = require 'Thrift'
+local TType = Thrift.TType
+local TMessageType = Thrift.TMessageType
+local __TObject = Thrift.__TObject
+local TApplicationException = Thrift.TApplicationException
+local __TClient = Thrift.__TClient
+local __TProcessor = Thrift.__TProcessor
+local ttype = Thrift.ttype
+local ttable_size = Thrift.ttable_size
+local social_network_ttypes = require 'social_network_ttypes'
+local ServiceException = social_network_ttypes.ServiceException
 
 -- HELPER FUNCTIONS AND STRUCTURES
 
-UploadMedia_args = __TObject:new{
+local UploadMedia_args = __TObject:new{
   req_id,
   media_types,
   medium,
@@ -196,7 +123,7 @@ function UploadMedia_args:write(oprot)
   oprot:writeStructEnd()
 end
 
-UploadMedia_result = __TObject:new{
+local UploadMedia_result = __TObject:new{
   se
 }
 
@@ -231,3 +158,88 @@ function UploadMedia_result:write(oprot)
   oprot:writeFieldStop()
   oprot:writeStructEnd()
 end
+
+local MediaServiceClient = __TObject.new(__TClient, {
+  __type = 'MediaServiceClient'
+})
+
+function MediaServiceClient:UploadMedia(req_id, media_types, medium, carrier)
+  self:send_UploadMedia(req_id, media_types, medium, carrier)
+  self:recv_UploadMedia(req_id, media_types, medium, carrier)
+end
+
+function MediaServiceClient:send_UploadMedia(req_id, media_types, medium, carrier)
+  self.oprot:writeMessageBegin('UploadMedia', TMessageType.CALL, self._seqid)
+  local args = UploadMedia_args:new{}
+  args.req_id = req_id
+  args.media_types = media_types
+  args.medium = medium
+  args.carrier = carrier
+  args:write(self.oprot)
+  self.oprot:writeMessageEnd()
+  self.oprot.trans:flush()
+end
+
+function MediaServiceClient:recv_UploadMedia(req_id, media_types, medium, carrier)
+  local fname, mtype, rseqid = self.iprot:readMessageBegin()
+  if mtype == TMessageType.EXCEPTION then
+    local x = TApplicationException:new{}
+    x:read(self.iprot)
+    self.iprot:readMessageEnd()
+    error(x)
+  end
+  local result = UploadMedia_result:new{}
+  result:read(self.iprot)
+  self.iprot:readMessageEnd()
+end
+local MediaServiceIface = __TObject:new{
+  __type = 'MediaServiceIface'
+}
+
+
+local MediaServiceProcessor = __TObject.new(__TProcessor
+, {
+ __type = 'MediaServiceProcessor'
+})
+
+function MediaServiceProcessor:process(iprot, oprot, server_ctx)
+  local name, mtype, seqid = iprot:readMessageBegin()
+  local func_name = 'process_' .. name
+  if not self[func_name] or ttype(self[func_name]) ~= 'function' then
+    iprot:skip(TType.STRUCT)
+    iprot:readMessageEnd()
+    x = TApplicationException:new{
+      errorCode = TApplicationException.UNKNOWN_METHOD
+    }
+    oprot:writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
+    x:write(oprot)
+    oprot:writeMessageEnd()
+    oprot.trans:flush()
+  else
+    self[func_name](self, seqid, iprot, oprot, server_ctx)
+  end
+end
+
+function MediaServiceProcessor:process_UploadMedia(seqid, iprot, oprot, server_ctx)
+  local args = UploadMedia_args:new{}
+  local reply_type = TMessageType.REPLY
+  args:read(iprot)
+  iprot:readMessageEnd()
+  local result = UploadMedia_result:new{}
+  local status, res = pcall(self.handler.UploadMedia, self.handler, args.req_id, args.media_types, args.medium, args.carrier)
+  if not status then
+    reply_type = TMessageType.EXCEPTION
+    result = TApplicationException:new{message = res}
+  elseif ttype(res) == 'ServiceException' then
+    result.se = res
+  else
+    result.success = res
+  end
+  oprot:writeMessageBegin('UploadMedia', reply_type, seqid)
+  result:write(oprot)
+  oprot:writeMessageEnd()
+  oprot.trans:flush()
+end
+
+return MediaServiceClient
+

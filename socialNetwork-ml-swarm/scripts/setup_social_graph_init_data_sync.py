@@ -1,6 +1,7 @@
 import sys
 import requests
 import random
+import base64
 
 # social graph states
 user_id_by_follower_num = {}
@@ -117,6 +118,22 @@ charset = ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'a', 's',
   'J', 'K', 'L', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '1', '2', '3', '4', '5',
   '6', '7', '8', '9', '0']
 
+#----------------- media data -----------------#
+media_dir = "/home/yanqi/wrk2/scripts/social-network/images/"
+media_jpg = {}
+media_jpg_num = 17
+media_png  = {}
+media_png_num = 15
+
+for i in range(1, media_jpg_num + 1):
+  with open(media_dir + str(i) + '.jpg', 'rb') as f:
+    media_jpg[i] = base64.b64encode(f.read())
+
+for i in range(1, media_png_num + 1):
+  with open(media_dir + str(i) + '.png', 'rb') as f:
+    media_png[i] = base64.b64encode(f.read())
+#----------------------------------------------#    
+
 def random_digits(length):
   return ''.join(str(random.randint(0,9)) for x in range(0, length))
 
@@ -180,6 +197,11 @@ def upload_register(session, addr, user):
 
 # compose a post for each user in the graph
 def compose_post_for_each(session, addr):
+  global media_jpg
+  global media_jpg_num
+  global media_png
+  global media_png_num
+
   for i in range(1, 963):
     user = str(i)
     text = random_text()
@@ -201,31 +223,40 @@ def compose_post_for_each(session, addr):
         text += " https://www.bilibili.com/av" + random_digits(8)
 
     # media
-    num_media = random.randint(0, 5)
-    media_ids = '['
+    num_media = 0
+    if random.random() < 0.2:
+      num_media = random.randint(1,3)
+
+    medium = '['
     media_types = '['
     for i in range(0, num_media):
-      media_ids += '\"' + random_digits(18) + '\",'
-      media_types += '\"png\",'
-    media_ids = media_ids[:-1] + ']'
+      media_coin = random.randint(1, media_jpg_num + media_png_num)
+      if media_coin < media_jpg_num:
+        media_id = random.randint(1, media_jpg_num)
+        medium += '\"' + media_jpg[media_id] + '\",'
+        media_types += '\"jpg\",'
+      else:
+        media_id = random.randint(1, media_png_num)
+        medium += '\"' + media_png[media_id] + '\",'
+        media_types += '\"png\",'
+    medium = medium[:-1] + ']'
     media_types = media_types[:-1] + ']'
-
 
     print("New message text: ")
     print(user)
     print(text)
-    print(media_ids)
+    # print(medium)
     print(media_types)
     print('\n')
 
     payload = None
 
     if num_media != 0:
-      payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'media_ids': media_ids, 
+      payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'medium': medium, 
                  'media_types': media_types, 'post_type': '0'}
     else:
-      media_ids = ''
-      payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'media_ids': media_ids, 
+      medium = ''
+      payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'medium': medium, 
                  'post_type': '0'}
 
     assert payload != None
@@ -237,6 +268,11 @@ def compose_post_for_each(session, addr):
     print(r.text)
 
 def compose_post(session, addr):
+  global media_jpg
+  global media_jpg_num
+  global media_png
+  global media_png_num
+
   user = random_tweet_user_id()
   text = random_text()
 
@@ -257,31 +293,39 @@ def compose_post(session, addr):
       text += " https://www.bilibili.com/av" + random_digits(8)
 
   # media
-  num_media = random.randint(0, 5)
-  media_ids = '['
+  num_media = 0
+  if random.random() < 0.2:
+    num_media = random.randint(1,3)
+  medium = '['
   media_types = '['
   for i in range(0, num_media):
-    media_ids += '\"' + random_digits(18) + '\",'
-    media_types += '\"png\",'
-  media_ids = media_ids[:-1] + ']'
+    media_coin = random.randint(1, media_jpg_num + media_png_num)
+    if media_coin < media_jpg_num:
+      media_id = random.randint(1, media_jpg_num)
+      medium += '\"' + media_jpg[media_id] + '\",'
+      media_types += '\"jpg\",'
+    else:
+      media_id = random.randint(1, media_png_num)
+      medium += '\"' + media_png[media_id] + '\",'
+      media_types += '\"png\",'
+  medium = medium[:-1] + ']'
   media_types = media_types[:-1] + ']'
-
 
   print("New message text: ")
   print(user)
   print(text)
-  print(media_ids)
+  # print(medium)
   print(media_types)
   print('\n')
 
   payload = None
 
   if num_media != 0:
-    payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'media_ids': media_ids, 
+    payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'medium': medium, 
                'media_types': media_types, 'post_type': '0'}
   else:
-    media_ids = ''
-    payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'media_ids': media_ids, 
+    medium = ''
+    payload = {'username': 'username_' + user, 'user_id': user, 'text': text, 'medium': medium, 
                'post_type': '0'}
 
   assert payload != None

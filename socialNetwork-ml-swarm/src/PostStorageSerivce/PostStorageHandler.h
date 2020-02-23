@@ -134,7 +134,7 @@ void PostStorageHandler::StorePost(
         bson_uint32_to_string(idx, &key, buf, sizeof buf);
         bson_t media_doc;
         BSON_APPEND_DOCUMENT_BEGIN(&media_list, key, &media_doc);
-        BSON_APPEND_INT64(&media_doc, "media_id", media.media_id);
+        BSON_APPEND_UTF8(&media_doc, "media", media.media.c_str());
         BSON_APPEND_UTF8(&media_doc, "media_type", media.media_type.c_str());
         bson_append_document_end(&media_list, &media_doc);
         idx++;
@@ -230,7 +230,7 @@ void PostStorageHandler::ReadPost(
     _return.text = post_json["text"];
     for (auto &item : post_json["media"]) {
       Media media;
-      media.media_id = item["media_id"];
+      media.media = item["media"];
       media.media_type = item["media_type"];
       _return.media.emplace_back(media);
     }
@@ -314,7 +314,7 @@ void PostStorageHandler::ReadPost(
       _return.text = post_json["text"];
       for (auto &item : post_json["media"]) {
         Media media;
-        media.media_id = item["media_id"];
+        media.media = item["media"];
         media.media_type = item["media_type"];
         _return.media.emplace_back(media);
       }
@@ -485,7 +485,7 @@ void PostStorageHandler::ReadPosts(
     new_post.text = post_json["text"];
     for (auto &item : post_json["media"]) {
       Media media;
-      media.media_id = item["media_id"];
+      media.media = item["media"];
       media.media_type = item["media_type"];
       new_post.media.emplace_back(media);
     }
@@ -582,7 +582,7 @@ void PostStorageHandler::ReadPosts(
       new_post.text = post_json["text"];
       for (auto &item : post_json["media"]) {
         Media media;
-        media.media_id = item["media_id"];
+        media.media = item["media"];
         media.media_type = item["media_type"];
         new_post.media.emplace_back(media);
       }

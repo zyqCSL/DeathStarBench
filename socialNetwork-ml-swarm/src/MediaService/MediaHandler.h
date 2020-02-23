@@ -36,7 +36,7 @@ class MediaHandler : public MediaServiceIf {
   ~MediaHandler() override = default;
 
   void UploadMedia(int64_t, const std::vector<std::string> &,
-      const std::vector<int64_t> &, const std::map<std::string,
+      const std::vector<std::string> &, const std::map<std::string,
       std::string> &) override;
 
  private:
@@ -67,14 +67,14 @@ void MediaHandler::UploadMedia(
   if (media_types.size() != medium.size()) {
     ServiceException se;
     se.errorCode = ErrorCode::SE_THRIFT_HANDLER_ERROR;
-    se.message = "The lengths of media_id list and media_type list are not equal";
+    se.message = "The lengths of medium list and media_types list are not equal";
     throw se;
   }
 
   std::vector<Media> media;
   for (int i = 0; i < medium.size(); ++i) {
     Media new_media;
-    new_media.media_id = medium[i];
+    new_media.media = medium[i];
     new_media.media_type = media_types[i];
     media.emplace_back(new_media);
   }
