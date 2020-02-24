@@ -1,5 +1,7 @@
 // Copyright (C) 2012 - Will Glozer.  All rights reserved.
 
+
+
 #include "wrk.h"
 #include "script.h"
 #include "main.h"
@@ -11,6 +13,10 @@
 #define MAX_LATENCY 24L * 60 * 60 * 1000000
 
 uint64_t raw_latency[MAXTHREADS][MAXL];
+pthread_mutex_t pt_lock;
+FILE *pt;
+pthread_mutex_t per_resp_lock;
+FILE* per_resp_file;
 
 static struct config {
     uint64_t threads;
@@ -24,16 +30,47 @@ static struct config {
     bool     latency;
     bool     dynamic;
     bool     record_all_responses;
-    bool     print_all_responses;
+    bool     print_per_response;
+    uint64_t resp_print_limit;      // only print the lateset $resp_print_limit requests, (print all request when set to 0)
     bool     print_realtime_latency;
     char    *script;
     SSL_CTX *ctx;
+
+    // Yanqi
+    bool     load_by_script;
+    uint64_t stats_report_us;
+    double   stats_sample_rate;
+    uint64_t sample_batch_size;
+    double   start_percent;     // the lowest percentile to report
+    double   percent_resolution;
 } cfg;
 
 static struct {
     stats *requests;
     pthread_mutex_t mutex;
 } statistics;
+
+// Yanqi, periodic stats reports
+static struct {
+    pthread_mutex_t mutex;
+    int             threads;
+    // double          percent_resolution;
+    int             slot;
+    int             ready_ctr;
+    bool*           thread_ready;
+    uint64_t**      thread_latency_stats;
+    uint64_t*       thread_cur_throughtput;
+    resp_record**   per_req_records;
+    uint64_t        per_req_limit;
+    uint64_t*       per_req_count;      // actual traces each thread have
+    uint64_t*       per_req_print_vec;
+    uint64_t        per_req_merged_size;
+    uint64_t        batch_tail_vec_size;
+    uint64_t*       batch_tail_vec;     // keep the few requests with >= 99% tail in a sample batch, exact number dependes on sample_rate
+
+    // Yanqi
+    double          start_percent;      // each thread's start_percent, different from cfg.start_percent, which is the start_percent for entire measurement
+} pstats;
 
 static struct sock sock = {
     .connect  = sock_connect,
@@ -54,30 +91,33 @@ static void handler(int sig) {
 }
 
 static void usage() {
-    printf("Usage: wrk <options> <url>                                       \n"
-           "  Options:                                                       \n"
-           "    -c, --connections <N>  Connections to keep open              \n"
-           "    -D, --dist             fixed, exp, norm, zipf                \n"
-           "    -P                     Print each request's latency          \n"
-           "    -p                     Print 99th latency every 0.2s to file \n"
-           "    -d, --duration    <T>  Duration of test                      \n"
-           "    -t, --threads     <N>  Number of threads to use              \n"
-           "                                                                 \n"
-           "    -s, --script      <S>  Load Lua script file                  \n"
-           "    -H, --header      <H>  Add header to request                 \n"
-           "    -L  --latency          Print latency statistics              \n"
-           "    -U  --timeout     <T>  Socket/request timeout                \n"
-           "    -B, --batch_latency    Measure latency of whole              \n"
-           "                           batches of pipelined ops              \n"
-           "                           (as opposed to each op)               \n"
-           "    -v, --version          Print version details                 \n"
-           "    -R, --rate        <T>  work rate (throughput)                \n"
-           "                           in requests/sec (total)               \n"
-           "                           [Required Parameter]                  \n"
-           "                                                                 \n"
-           "                                                                 \n"
-           "  Numeric arguments may include a SI unit (1k, 1M, 1G)           \n"
-           "  Time arguments may include a time unit (2s, 2m, 2h)            \n");
+    printf("Usage: wrk <options> <url>                                           \n"
+           "  Options:                                                           \n"
+           "    -c, --connections <N>  Connections to keep open                  \n"
+           "    -D, --dist             fixed, exp, norm, zipf                    \n"
+           "    -P                <N>  Print each request's latency              \n"
+           "    -p                <F>  Print xth latency every #i s to file      \n"
+           "    -r                <F>  The resolution for reporting lat distr    \n"
+           "    -i,               <T>  xth tail report interval in second        \n"
+           "    -S,               <T>  stats sample rate [0, 1]                  \n"
+           "    -d, --duration    <T>  Duration of test                          \n"
+           "    -t, --threads     <N>  Number of threads to use                  \n"
+           "                                                                     \n"
+           "    -s, --script      <S>  Load Lua script file                      \n"
+           "    -H, --header      <H>  Add header to request                     \n"
+           "    -L  --latency          Print latency statistics                  \n"
+           "    -U  --timeout     <T>  Socket/request timeout                    \n"
+           "    -B, --batch_latency    Measure latency of whole                  \n"
+           "                           batches of pipelined ops                  \n"
+           "                           (as opposed to each op)                   \n"
+           "    -v, --version          Print version details                     \n"
+           "    -R, --rate        <T>  work rate (throughput)                    \n"
+           "                           in requests/sec (total)                   \n"
+           "                           [Required Parameter]                      \n"
+           "                                                                     \n"
+           "                                                                     \n"
+           "  Numeric arguments may include a SI unit (1k, 1M, 1G)               \n"
+           "  Time arguments may include a time unit (2s, 2m, 2h)                \n");
 }
 
 int main(int argc, char **argv) {
@@ -110,23 +150,88 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT,  SIG_IGN);
 
+    pt = fopen("/filer-01/yz2297/wrk2_log/pt.txt", "w");
+    assert (pthread_mutex_init(&pt_lock, NULL) == 0);
+
+    per_resp_file = fopen("/filer-01/yz2297/wrk2_log/per_resp.txt", "w");
+    assert (pthread_mutex_init(&per_resp_lock, NULL) == 0);
+
     pthread_mutex_init(&statistics.mutex, NULL);
     statistics.requests = stats_alloc(10);
+    // Yanqi, periodic report
+    if(cfg.print_realtime_latency || cfg.print_per_response)
+        init_pstats(cfg.threads);
+
     thread *threads = zcalloc(cfg.threads * sizeof(thread));
 
     hdr_init(1, MAX_LATENCY, 3, &(statistics.requests->histogram));
 
     lua_State *L = script_create(cfg.script, url, headers);
+
+    // Yanqi, read loads from script
+    int load_arr_len = 0;
+    uint64_t* load_intervals = NULL;
+    uint64_t* load_rates = NULL;
+    if(cfg.load_by_script) {
+        if(script_get_load(L, &load_arr_len, &load_intervals, &load_rates))
+            return -1;
+        cfg.duration = 0;
+        for(int i = 0; i < load_arr_len; ++i) {
+            cfg.duration += load_intervals[i];
+        }
+    }
+
     if (!script_resolve(L, host, service)) {
         char *msg = strerror(errno);
         fprintf(stderr, "unable to connect to %s:%s %s\n", host, service, msg);
         exit(1);
     }
 
+    printf("After script parsing\n");
+
     uint64_t connections = cfg.connections / cfg.threads;
-    uint64_t throughput = cfg.rate / cfg.threads;
+    double throughput = 0;
+    if(!cfg.load_by_script)
+        throughput = (double)cfg.rate / cfg.threads;
+    else {
+        // printf("load_rates[0] = %lu, cfg.threads = %d\n", load_rates[0], cfg.threads);
+        throughput = (double)load_rates[0] / cfg.threads;
+    }
     uint64_t stop_at     = time_us() + (cfg.duration * 1000000);
 
+    // need to set per_req_records based on max loads
+    double max_throughput = 0;
+    if(!cfg.load_by_script)
+        max_throughput = throughput;
+    else {
+        // printf("load_rates[0] = %lu, cfg.threads = %d\n", load_rates[0], cfg.threads);
+        for(int i = 0; i < load_arr_len; ++i) {
+            double cur_throughput = (double)load_rates[i] / cfg.threads;
+            if(max_throughput < cur_throughput)
+                max_throughput = cur_throughput;
+        }
+    }
+
+    // set pstats.per_req_records based on max load
+    pstats.per_req_limit = (uint64_t)(max_throughput * cfg.stats_report_us / 1000000.0);
+    pstats.per_req_merged_size = (uint64_t)(max_throughput * cfg.stats_report_us / 1000000.0 * cfg.stats_sample_rate) * cfg.threads;
+
+    // printf("max_throughput = %f\n", max_throughput);
+    // printf("cfg.stats_report_us = %lu\n", cfg.stats_report_us);
+    // printf("cfg.stats_sample_rate=%f\n", cfg.stats_sample_rate);
+    // printf("pstats.per_req_merged_size = %lu\n", pstats.per_req_merged_size);
+
+    pstats.per_req_print_vec = malloc(sizeof(uint64_t) * pstats.per_req_merged_size);   
+
+    for(int i = 0; i < cfg.threads; ++i) {
+        pstats.per_req_records[i] = malloc(sizeof(resp_record) * pstats.per_req_limit);
+        for(uint64_t j = 0; j < pstats.per_req_limit; ++j) {
+            pstats.per_req_records[i][j].latency = 0;
+            pstats.per_req_records[i][j].time = 0;
+        }
+    }
+
+    uint64_t base_start_time = time_us();
     for (uint64_t i = 0; i < cfg.threads; i++) {
         thread *t = &threads[i];
         t->tid           = i;
@@ -136,8 +241,64 @@ int main(int argc, char **argv) {
         t->stop_at       = stop_at;
         t->complete      = 0;
         t->monitored     = 0;
-        t->target        = throughput/10; //Shuang
+        t->target        = (uint64_t)(throughput)/10; //Shuang
         t->accum_latency = 0;
+        t->monitor_event_cnt = 0;
+        t->base_start_time = base_start_time;    // Yanqi
+        t->throughput_arr_ptr = 0;
+        t->throughput_arr = NULL;
+        t->throughput_change_us = NULL;
+
+        // per-request latency
+        t->record_per_request = cfg.print_per_response;
+        t->per_req_start = 0;
+        t->per_req_end = 0;
+        t->per_req_ctr = 0;
+        // t->per_req_limit = (uint64_t)(max_throughput * cfg.stats_report_us / 1000000.0 * cfg.stats_sample_rate);
+        t->per_req_limit = pstats.per_req_limit;
+        t->per_req_records = NULL;
+        if(cfg.print_per_response || cfg.stats_sample_rate > 0) {
+            t->per_req_records = malloc(sizeof(resp_record) * t->per_req_limit);
+            for(int i = 0; i < t->per_req_limit; ++i) {
+                t->per_req_records[i].latency = 0;
+                t->per_req_records[i].time = 0;
+            }
+        } 
+
+        // debug
+        // printf("init throughput: %.1f\n", t->throughput);
+
+        // verify load change
+        t->last_stats_time = base_start_time;
+        t->resp_received = 0;
+        // periodic stats
+        t->stats_report_us = cfg.stats_report_us;
+        t->print_realtime_latency = cfg.print_realtime_latency;
+
+        // Yanqi, read load from script
+        if(cfg.load_by_script) {
+            t->throughput_arr_len = load_arr_len;
+            t->throughput_change_us = malloc(sizeof(uint64_t) * load_arr_len);
+            for(int x = 0; x < load_arr_len; ++x) {
+                uint64_t duration = 0;
+                for(int j = 0; j < x; ++j)
+                    duration += load_intervals[j];
+                t->throughput_change_us[x] = duration * 1000000;
+            }
+
+            t->throughput_arr = malloc(sizeof(double) * load_arr_len);
+            for(int x = 0; x < load_arr_len; ++x)
+                t->throughput_arr[x] = (double)load_rates[x]/cfg.threads;
+
+            // // debug
+            // printf("\n");
+            // for(int x = 0; x < load_arr_len; ++x) {
+            //     printf("throughput: %.2f\n", t->throughput_arr[x]*cfg.threads);
+            //     printf("throughput_change_us: %lu\n", (t->throughput_change_us[x])/1000000);
+            // }
+            // printf("\n");
+        }
+
         t->L = script_create(cfg.script, url, headers);
         script_init(L, t, argc - optind, &argv[optind]);
 
@@ -166,6 +327,7 @@ int main(int argc, char **argv) {
     sigaction(SIGINT, &sa, NULL);
 
     char *time = format_time_s(cfg.duration);
+    printf("duration = %lus\n", cfg.duration);
     printf("Running %s test @ %s\n", time, url);
     printf("  %"PRIu64" threads and %"PRIu64" connections\n",
             cfg.threads, cfg.connections);
@@ -177,13 +339,18 @@ int main(int argc, char **argv) {
 
     struct hdr_histogram* latency_histogram;
     struct hdr_histogram* real_latency_histogram;
+    
     hdr_init(1, MAX_LATENCY, 3, &latency_histogram);
     hdr_init(1, MAX_LATENCY, 3, &real_latency_histogram);
+
+    // printf("After hdr_init\n");
 
     for (uint64_t i = 0; i < cfg.threads; i++) {
         thread *t = &threads[i];
         pthread_join(t->thread, NULL);
     }
+
+    // printf("After join threads\n");
 
     uint64_t runtime_us = time_us() - start;
 
@@ -199,9 +366,9 @@ int main(int argc, char **argv) {
         errors.status  += t->errors.status;
 
         hdr_add(latency_histogram, t->latency_histogram);
-        hdr_add(real_latency_histogram, t->real_latency_histogram);
+        // hdr_add(real_latency_histogram, t->real_latency_histogram);
         
-        if (cfg.print_all_responses) {
+        if (cfg.print_per_response) {
             char filename[10] = {0};
             sprintf(filename, "%" PRIu64 ".txt", i);
             FILE* ff = fopen(filename, "w");
@@ -212,6 +379,7 @@ int main(int argc, char **argv) {
             fclose(ff);
         }
     }
+    fclose(pt);
 
     long double runtime_s   = runtime_us / 1000000.0;
     long double req_per_s   = complete   / runtime_s;
@@ -261,10 +429,14 @@ void *thread_main(void *arg) {
     thread *thread = arg;
     aeEventLoop *loop = thread->loop;
 
+    // printf("before thread hdr_init\n");
+
     thread->cs = zcalloc(thread->connections * sizeof(connection));
     tinymt64_init(&thread->rand, time_us());
     hdr_init(1, MAX_LATENCY, 3, &thread->latency_histogram);
     hdr_init(1, MAX_LATENCY, 3, &thread->real_latency_histogram);
+
+    // printf("after thread hdr_init\n");
 
     char *request = NULL;
     size_t length = 0;
@@ -273,12 +445,16 @@ void *thread_main(void *arg) {
         script_request(thread->L, &request, &length);
     }
     
-    thread->ff = NULL;
-    if ((cfg.print_realtime_latency) && (thread->tid == 0)) {
-        char filename[50];
-        snprintf(filename, 50, "/filer-01/datasets/nginx/%" PRIu64 ".txt", thread->tid);
-        thread->ff = fopen(filename, "w");
-    }
+    // thread->ff = NULL;
+    // if ((cfg.print_realtime_latency) && (thread->tid == 0)) {
+    //     char filename[50];
+    //     snprintf(filename, 50, "/filer01/yg397/three_tier/%" PRIu64 ".txt", thread->tid);
+    //     thread->ff = fopen(filename, "w");
+    // }
+
+    char filename[50];
+    snprintf(filename, 50, "/filer-01/yz2297/wrk2_log/%" PRIu64 ".txt", thread->tid);
+    thread->ff = fopen(filename, "w");
 
 
     double throughput = (thread->throughput / 1000000.0) / thread->connections;
@@ -299,20 +475,89 @@ void *thread_main(void *arg) {
         aeCreateTimeEvent(loop, i, delayed_initial_connect, c, NULL);
     }
 
+    // printf("conn init interval = %d\n", thread->cs->interval);
+
     uint64_t calibrate_delay = CALIBRATE_DELAY_MS + (thread->connections);
     uint64_t timeout_delay = TIMEOUT_INTERVAL_MS + (thread->connections);
 
     aeCreateTimeEvent(loop, calibrate_delay, calibrate, thread, NULL);
     aeCreateTimeEvent(loop, timeout_delay, check_timeouts, thread, NULL);
 
+    // Yanqi
+    // register load change events
+    for(int i = 1; i < thread->throughput_arr_len; ++i)
+        aeCreateTimeEvent(loop, thread->throughput_change_us[i]/1000, change_throughput, thread, NULL);
+    // register stats dump event
+    if(thread->print_realtime_latency)
+        aeCreateTimeEvent(loop, thread->stats_report_us/1000 + thread->tid, report_stats, thread, NULL);
+
+    // printf('thread loop starts\n');
+
     thread->start = time_us();
     aeMain(loop);
 
+    // printf('thread loop ends\n');
+
     aeDeleteEventLoop(loop);
     zfree(thread->cs);
-    if (cfg.print_realtime_latency && thread->tid == 0) fclose(thread->ff);
+    // if (cfg.print_realtime_latency && thread->tid == 0) fclose(thread->ff);
+    if (cfg.print_realtime_latency) fclose(thread->ff);
 
     return NULL;
+}
+
+// Yanqi, periodic report
+static void init_pstats(int threads) {
+    pthread_mutex_init(&pstats.mutex, NULL);
+
+    pstats.threads = threads;
+    // pstats.percent_resolution = 1;  // by default, print data at evey 1% granularity
+    pstats.slot = (int)(threads * (100 - cfg.start_percent - cfg.percent_resolution)/cfg.percent_resolution);
+    assert(pstats.slot > 0);
+    pstats.start_percent = 100 - pstats.slot * cfg.percent_resolution;
+    assert(pstats.start_percent > 0);
+
+    pstats.ready_ctr = 0;
+    pstats.thread_ready = malloc(sizeof(bool) * threads);
+    for(int i = 0; i < threads; ++i)
+        pstats.thread_ready[i] = false;
+
+    pstats.thread_latency_stats = malloc(sizeof(uint64_t*) * threads);
+    for(int i = 0; i < threads; ++i)
+        pstats.thread_latency_stats[i] = malloc(sizeof(uint64_t) * pstats.slot);
+
+    pstats.thread_cur_throughtput = malloc(sizeof(uint64_t) * threads);
+    for(int i = 0; i < threads; ++i)
+        pstats.thread_cur_throughtput[i] = 0;
+
+    // init record for a sample batch
+    pstats.batch_tail_vec_size = (uint64_t)(cfg.sample_batch_size * 0.01);
+    if(pstats.batch_tail_vec_size == 0)
+        pstats.batch_tail_vec_size = 1;
+    pstats.batch_tail_vec = malloc(sizeof(uint64_t) * pstats.batch_tail_vec_size);
+    for(int i = 0; i < pstats.batch_tail_vec_size; ++i)
+        pstats.batch_tail_vec[i] = 0;
+
+    if(cfg.stats_sample_rate > 0) {
+        pstats.per_req_records = malloc(sizeof(resp_record*) * threads);
+        /** can only be initialized based on per_req_print_limit **/
+        // pstats.per_req_print_vec = malloc(sizeof(uint64_t) * cfg.resp_print_limit);        
+        pstats.per_req_count = malloc(sizeof(uint64_t) * threads);
+        for(int i = 0; i < threads; ++i) {
+            pstats.per_req_count[i] = 0;
+            /**** can only be initialized after max throughput is known *****/
+            // pstats.per_req_records[i] = malloc(sizeof(resp_record) * cfg.resp_print_limit);
+            // for(uint64_t j = 0; j < cfg.resp_print_limit; ++j) {
+            //     pstats.per_req_records[i][j].latency = 0;
+            //     pstats.per_req_records[i][j].time = 0;
+            // }
+        }
+
+    } else {
+        pstats.per_req_records = NULL;
+        pstats.per_req_count = NULL;
+        pstats.per_req_print_vec = NULL;
+    }
 }
 
 static int connect_socket(thread *thread, connection *c) {
@@ -360,13 +605,281 @@ static int delayed_initial_connect(aeEventLoop *loop, long long id, void *data) 
     return AE_NOMORE;
 }
 
+static int change_throughput(aeEventLoop *loop, long long id, void *data) {
+    thread* thread = data;
+    thread->throughput_arr_ptr ++;
+    assert(thread->throughput_arr_ptr < thread->throughput_arr_len);
+    thread->throughput = thread->throughput_arr[thread->throughput_arr_ptr];
+    thread->target = (uint64_t)(thread->throughput/10); // make sure still printing every 0.1s
+
+    double throughput = (thread->throughput / 1000000.0) / thread->connections;
+    connection *c = thread->cs;
+    // uint64_t c_inter = 0;
+    for (uint64_t i = 0; i < thread->connections; i++, c++) {
+        c->interval   = 1000000*thread->connections/thread->throughput;
+        // c_inter = c->interval;
+        c->throughput = throughput;
+    }
+
+    // debug
+    // printf("Throughput changed to %.2f at time %lus\n", thread->throughput, (time_us() - thread->base_start_time)/1000000L );
+    // printf("conn interval changed to %d at time %lus\n", c_inter, (time_us() - thread->base_start_time)/1000000L );
+
+    return AE_NOMORE;
+}
+
+static int report_stats(aeEventLoop *loop, long long id, void *data) {
+    thread* thread = data;
+    // return (int)(thread->stats_report_us/1000);
+    
+    bool update = false;
+    pthread_mutex_lock(&pstats.mutex);
+    update = !pstats.thread_ready[thread->tid];
+    pthread_mutex_unlock(&pstats.mutex);
+
+    update &= (thread->monitor_event_cnt > 0);
+
+    // double start_percent = 100 - pstats.threads;
+    if(update) {
+        // load info
+        pstats.thread_cur_throughtput[thread->tid] = (uint64_t)(thread->throughput);
+
+        // latency info
+        thread->monitor_event_cnt = 0;
+        double percent = 0;
+        for(int i = 0; i < pstats.slot; ++i) {
+            percent = pstats.start_percent + i * cfg.percent_resolution;
+            // printf("percent = %.2f, tid = %d, i = %d, pstats.slot = %d\n", percent, thread->tid, i, pstats.slot);
+            assert(percent <= 100);
+            pstats.thread_latency_stats[thread->tid][i] =  hdr_value_at_percentile(thread->real_latency_histogram, percent);
+        }
+        hdr_reset(thread->real_latency_histogram);
+        // per req latency
+        if(cfg.stats_sample_rate > 0) {
+            pstats.per_req_count[thread->tid] = 0;
+            uint64_t start = thread->per_req_start;
+            uint64_t end = thread->per_req_end;
+            while(start != end) {
+                uint64_t pos = pstats.per_req_count[thread->tid];
+                assert(pos < pstats.per_req_limit);
+                pstats.per_req_records[thread->tid][pos].latency = thread->per_req_records[start].latency;
+                pstats.per_req_records[thread->tid][pos].time = thread->per_req_records[start].time;
+                pstats.per_req_count[thread->tid] += 1;
+                start = (start + 1) % thread->per_req_limit;
+            }
+            thread->per_req_start = 0;
+            thread->per_req_end = 0;
+        }
+
+        pthread_mutex_lock(&pstats.mutex);
+        pstats.ready_ctr += 1;
+        pstats.thread_ready[thread->tid] = true;
+        
+        if(pstats.ready_ctr == pstats.threads) {
+            pstats.ready_ctr = 0;
+            for(int i = 0; i < pstats.threads; ++i)
+                pstats.thread_ready[i] = false;
+
+            uint64_t total_throughput = 0;
+            for(int i = 0; i < pstats.threads; ++i)
+                total_throughput += pstats.thread_cur_throughtput[i];
+
+            double end_percent = 100 - percent;
+            // print stats
+            char* report_str = zcalloc(sizeof(char) * ((int)((100 - cfg.start_percent)/cfg.percent_resolution)*30 + 10) );
+            unsigned lat_vec_size = (unsigned)((100 - cfg.start_percent)/cfg.percent_resolution);
+            uint64_t* lat_vec = zmalloc(sizeof(uint64_t) * lat_vec_size);
+
+            get_tail_range(pstats.thread_latency_stats, pstats.threads, pstats.slot, cfg.percent_resolution, end_percent, lat_vec, lat_vec_size);
+            for(int i = 0; i < lat_vec_size; ++i) {
+                double cur_percent = 100 - (lat_vec_size - i) * cfg.percent_resolution;
+                char local_str[30];
+                sprintf(local_str, "%.2f:%" PRId64 ";", cur_percent, lat_vec[i]);
+                strcat(report_str, local_str);
+            }
+            
+            pthread_mutex_unlock(&pstats.mutex);
+
+            // dump stats to file
+            pthread_mutex_lock(&pt_lock);
+            // printf("write to pt\n");    
+            fprintf(pt, "%sxput:" "%" PRId64 "\n", report_str, total_throughput);
+            fflush(pt);
+
+            zfree(report_str); 
+
+            // print per request latency
+            if(cfg.stats_sample_rate > 0)
+                print_per_resp_latency();
+            pthread_mutex_unlock(&pt_lock); 
+        } else
+            pthread_mutex_unlock(&pstats.mutex);
+    }
+
+    return (int)(thread->stats_report_us/1000);
+}
+
+static uint64_t get_tail(uint64_t** stats, int threads, int slot, double resolution, double end_percent, double target_percent) {
+    double cum_percent = 100;
+    uint64_t cur_val = 0;
+    uint64_t prev_val = 0;
+    int* ptr = zmalloc(sizeof(int) * threads);
+    for(int i = 0; i < threads; ++i)
+        ptr[i] = slot - 1;
+    while(cum_percent > target_percent) {
+        // printf("cum_percent = %f\n", cum_percent);
+        int max_thread = -1;
+        uint64_t max_val = 0;
+        for(int i = 0; i < threads; ++i) {
+            if(ptr[i] < 0)
+                continue;
+            if(max_thread < 0 || max_val < stats[i][ptr[i]]) {
+                max_thread = i;
+                max_val = stats[i][ptr[i]];
+            }
+        }
+
+        // printf("max_val = %lu\n", max_val);
+
+        assert(max_thread >= 0);
+        if(cur_val != 0)
+            assert(max_val <= cur_val);
+        prev_val = cur_val;
+        cur_val = max_val;
+        if(ptr[max_thread] == slot - 1)
+            cum_percent -= 1.0/threads * end_percent;
+        else
+            cum_percent -= 1.0/threads * resolution;
+        // printf("cum_percent after = %f\n", cum_percent);
+        ptr[max_thread] -= 1;
+    }
+    zfree(ptr);
+
+    // printf("prev_val = %lu\n\n", prev_val);
+    return prev_val;
+}
+
+static void get_tail_range(uint64_t** stats, int threads, int slot, double resolution, double end_percent, uint64_t* lat_vec, unsigned vec_size) {
+    double cum_percent = 100;
+    int* ptr = zmalloc(sizeof(int) * threads);
+    for(int i = 0; i < threads; ++i)
+        ptr[i] = slot - 1;
+
+    double target_percent = cum_percent - resolution;
+    for(int lat_vec_pos = vec_size - 1; lat_vec_pos >= 0; --lat_vec_pos) {
+        uint64_t cur_val = 0;
+        uint64_t prev_val = 0;
+        while(cum_percent > target_percent) {
+            // printf("cum_percent = %f\n", cum_percent);
+            int max_thread = -1;
+            uint64_t max_val = 0;
+            for(int i = 0; i < threads; ++i) {
+                if(ptr[i] < 0)
+                    continue;
+                if(max_thread < 0 || max_val < stats[i][ptr[i]]) {
+                    max_thread = i;
+                    max_val = stats[i][ptr[i]];
+                }
+            }
+
+            // printf("max_val = %lu\n", max_val);
+
+            assert(max_thread >= 0);
+            if(cur_val != 0)
+                assert(max_val <= cur_val);
+            prev_val = cur_val;
+            cur_val = max_val;
+            if(ptr[max_thread] == slot - 1)
+                cum_percent -= 1.0/threads * end_percent;
+            else
+                cum_percent -= 1.0/threads * resolution;
+            // printf("cum_percent after = %f\n", cum_percent);
+            ptr[max_thread] -= 1;
+        }
+        assert(cur_val != 0);
+        lat_vec[lat_vec_pos] = prev_val;
+        target_percent -= resolution;
+    }
+
+    zfree(ptr);
+}
+
+static void print_per_resp_latency() {
+    uint64_t ptr = pstats.per_req_merged_size - 1;
+    uint64_t sum = 0;
+    for(int i = 0; i < pstats.threads; ++i)
+        sum += pstats.per_req_count[i];
+    if(sum == 0)
+        return;
+
+    while(ptr >= 0 && sum != 0) {
+        uint64_t batch_size = cfg.sample_batch_size;
+        uint64_t tail_sample_cnt = 0;
+        // printf("batch_size = %lu\n", batch_size);
+
+        while(batch_size > 0 && sum != 0) {
+            // for the next latest request among all threads
+            uint64_t latest_time = 0;
+            uint64_t latest_thread = 0;
+            for(int i = 0; i < pstats.threads; ++i) {
+                if(pstats.per_req_count[i] == 0)
+                    continue;
+                uint64_t pos = pstats.per_req_count[i] - 1;
+                if(pstats.per_req_records[i][pos].time > latest_time) {
+                    latest_time = pstats.per_req_records[i][pos].time;
+                    latest_thread = i;
+                }
+            }
+
+            if(tail_sample_cnt < pstats.batch_tail_vec_size) {
+                pstats.batch_tail_vec[tail_sample_cnt] = pstats.per_req_records[latest_thread][pstats.per_req_count[latest_thread]].latency;
+                tail_sample_cnt += 1;
+            } else {
+                int pos = 0;
+                uint64_t min_lat = pstats.batch_tail_vec[0];
+                for(int i = 1; i < pstats.batch_tail_vec_size; ++i) {
+                    if(pstats.batch_tail_vec[i] < min_lat) {
+                        pos = i;
+                        min_lat = pstats.batch_tail_vec[i];
+                    }
+                }
+                if(min_lat < pstats.per_req_records[latest_thread][pstats.per_req_count[latest_thread]].latency)
+                    pstats.batch_tail_vec[pos] = pstats.per_req_records[latest_thread][pstats.per_req_count[latest_thread]].latency;
+            }
+
+            batch_size -= 1;
+            pstats.per_req_count[latest_thread] -= 1;
+            sum -= 1;
+        }
+
+        assert(tail_sample_cnt >= 1);
+        uint64_t min_lat = pstats.batch_tail_vec[0];
+        for(int i = 0; i < tail_sample_cnt; ++i) {
+            if(pstats.batch_tail_vec[i] < min_lat)
+                min_lat = pstats.batch_tail_vec[i];
+        }
+        pstats.per_req_print_vec[ptr] = min_lat;
+        ptr -= 1;
+    }
+
+    // printf("%lu requests recorded\n", cfg.resp_print_limit - ptr);
+    while(ptr != pstats.per_req_merged_size) {
+        fprintf(per_resp_file, "%" PRId64 "\n", pstats.per_req_print_vec[ptr]); 
+        ++ptr;
+    }
+    // fprintf(per_resp_file, "epoch ends\n");
+    fflush(per_resp_file);
+}
+
 static int calibrate(aeEventLoop *loop, long long id, void *data) {
     thread *thread = data;
 
     long double mean = hdr_mean(thread->latency_histogram);
     long double latency = hdr_value_at_percentile(
             thread->latency_histogram, 90.0) / 1000.0L;
-    long double interval = MAX(latency * 2, 10);
+    // long double interval = MAX(latency * 2, 10);
+    // Yanqi, make calibrate much less frequent
+    long double interval = MAX(latency * 2, 100);
 
     if (mean == 0) return CALIBRATE_DELAY_MS;
 
@@ -419,6 +932,8 @@ static int sample_rate(aeEventLoop *loop, long long id, void *data) {
     thread->requests = 0;
     thread->start    = time_us();
 
+    // for debug
+    // return AE_NOMORE;
     return thread->interval;
 }
 
@@ -428,6 +943,7 @@ static int header_field(http_parser *parser, const char *at, size_t len) {
         *c->headers.cursor++ = '\0';
         c->state = FIELD;
     }
+    // printf("print %s\n",at);
     buffer_append(&c->headers, at, len);
     return 0;
 }
@@ -438,6 +954,7 @@ static int header_value(http_parser *parser, const char *at, size_t len) {
         *c->headers.cursor++ = '\0';
         c->state = VALUE;
     }
+    
     buffer_append(&c->headers, at, len);
     return 0;
 }
@@ -546,8 +1063,10 @@ static int response_complete(http_parser *parser) {
     int status = parser->status_code;
 
     thread->complete++;
-    //printf("complete %"PRIu64"\n", thread->complete);
+    // printf("complete %"PRIu64"\n", thread->complete);
     thread->requests++;
+
+    thread->monitor_event_cnt++;
 
     if (status > 399) {
         thread->errors.status++;
@@ -555,36 +1074,59 @@ static int response_complete(http_parser *parser) {
 
     if (c->headers.buffer) {
         *c->headers.cursor++ = '\0';
-        script_response(thread->L, status, &c->headers, &c->body);
+        script_response(thread->L, status, &c->headers, &c->body);        
         c->state = FIELD;
     }
-
+        
     if (now >= thread->stop_at) {
         aeStop(thread->loop);
         goto done;
     }
 
+    /***
+     * Yanqi, verify load change
+     */
+    // thread->resp_received += 1;
+    // if(now - thread->last_stats_time > 10000000) {
+    //     printf("resp_recv = %lu\n", thread->resp_received);
+    //     printf("thread throughput = %.1f\n", thread->resp_received*1000000.0/(now - thread->last_stats_time));
+    //     thread->last_stats_time = now;
+    //     thread->resp_received = 0;
+    // }
+    /******* end *******/
 
     // Record if needed, either last in batch or all, depending in cfg:
     if (cfg.record_all_responses) {
         //printf("complete %"PRIu64" @ %"PRIu64"\n", c->complete, now);
         assert(now > c->actual_latency_start[c->complete & MAXO] );
         uint64_t actual_latency_timing = now - c->actual_latency_start[c->complete & MAXO];
+
+        if(actual_latency_timing > MAX_LATENCY/2) {
+            printf("overflow latency = %" PRIu64 ", now = %" PRIu64 ", send_time = %" PRIu64 " c->complete & MAXO = %" PRIu64 "\n", actual_latency_timing, now, c->actual_latency_start[c->complete & MAXO], c->complete & MAXO);
+            actual_latency_timing = 0;
+        }
+
         hdr_record_value(thread->latency_histogram, actual_latency_timing);
         hdr_record_value(thread->real_latency_histogram, actual_latency_timing);
-    
+
+        // record per request latency if required
+        if(cfg.stats_sample_rate > 0) {
+            // printf("per_req_end = %lu\n", thread->per_req_end);
+            // printf("per_req_limit = %lu\n", thread->per_req_limit);
+
+            thread->per_req_records[thread->per_req_end].latency = actual_latency_timing;
+            thread->per_req_records[thread->per_req_end].time = now;
+            thread->per_req_end = (thread->per_req_end + 1) % thread->per_req_limit;
+            if(thread->per_req_start == thread->per_req_end)
+                thread->per_req_start = (thread->per_req_start + 1) % thread->per_req_limit;  
+            if(thread->per_req_ctr < thread->per_req_limit)
+                thread->per_req_ctr += 1;
+        }
+
         thread->monitored++;
         thread->accum_latency += actual_latency_timing;
-        if (thread->monitored == thread->target) {       
-            if (cfg.print_realtime_latency && thread->tid == 0) {
-                fprintf(thread->ff, "%" PRId64 "\n", hdr_value_at_percentile(thread->real_latency_histogram, 99));
-                fflush(thread->ff);
-            }
-            thread->monitored = 0;
-            thread->accum_latency = 0;
-            hdr_reset(thread->real_latency_histogram);
-        }
-        if (cfg.print_all_responses && ((thread->complete) < MAXL)) 
+
+        if (cfg.print_per_response && ((thread->complete) < MAXL)) 
             raw_latency[thread->tid][thread->complete] = actual_latency_timing;
     }
 
@@ -744,11 +1286,18 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
     cfg->timeout     = SOCKET_TIMEOUT_MS;
     cfg->rate        = 0;
     cfg->record_all_responses = true;
-    cfg->print_all_responses = false;
+    cfg->print_per_response = false;
+    cfg->resp_print_limit = 0;
     cfg->print_realtime_latency = false;
     cfg->dist = 0;
 
-    while ((c = getopt_long(argc, argv, "t:c:d:s:D:H:T:R:LPpBrv?", longopts, NULL)) != -1) {
+    // Yanqi, default monitor interval 0.1s
+    cfg->stats_report_us    = 100000;
+    cfg->start_percent      = 99; 
+    cfg->stats_sample_rate  = 1;   
+    cfg->percent_resolution = 1;
+
+    while ((c = getopt_long(argc, argv, "t:c:d:s:D:H:T:R:i:P:S:p:r:LBrv?", longopts, NULL)) != -1) {
         switch (c) {
             case 't':
                 if (scan_metric(optarg, &cfg->threads)) return -1;
@@ -776,10 +1325,28 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
                 *header++ = optarg;
                 break;
             case 'P': /* Shuang: print each requests's latency */
-                cfg->print_all_responses = true;
+                cfg->print_per_response = true;
+                cfg->resp_print_limit = strtoul(optarg, NULL, 0);
                 break;
             case 'p': /* Shuang: print avg latency every 0.2s */
                 cfg->print_realtime_latency = true;
+                cfg->start_percent = atof(optarg);
+                assert(cfg->start_percent < 100);
+                break;
+            case 'r':
+                cfg->percent_resolution = atof(optarg);
+                break;
+            case 'i':
+                cfg->stats_report_us = (uint64_t)(1000000*atof(optarg));
+                // printf("report_interval = %lu\n", cfg->stats_report_us);
+                assert(cfg->stats_report_us > 0);
+                break;
+            case 'S':
+                cfg->stats_sample_rate = atof(optarg);
+                // printf("report_interval = %lu\n", cfg->stats_report_us);
+                assert(cfg->stats_sample_rate >= 0);
+                assert(cfg->stats_sample_rate <= 1);
+                cfg->sample_batch_size = (uint64_t)(1.0/cfg->stats_sample_rate);
                 break;
             case 'L':
                 cfg->latency = true;
@@ -792,6 +1359,10 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
                 cfg->timeout *= 1000;
                 break;
             case 'R':
+                if(!strcasecmp(optarg, "script")) {
+                    cfg->load_by_script = true;
+                    break;
+                }
                 if (scan_metric(optarg, &cfg->rate)) return -1;
                 break;
             case 'v':
@@ -806,7 +1377,7 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
         }
     }
 
-    if (optind == argc || !cfg->threads || !cfg->duration) return -1;
+    if (optind == argc || !cfg->threads || (!cfg->duration && !cfg->load_by_script)) return -1;
 
     if (!script_parse_url(argv[optind], parts)) {
         fprintf(stderr, "invalid URL: %s\n", argv[optind]);
@@ -818,9 +1389,9 @@ static int parse_args(struct config *cfg, char **url, struct http_parser_url *pa
         return -1;
     }
 
-    if (cfg->rate == 0) {
+    if (cfg->rate == 0 && !cfg->load_by_script) {
         fprintf(stderr,
-                "Throughput MUST be specified with the --rate or -R option\n");
+                "Throughput MUST be specified with the --rate or -R option or in script\n");
         return -1;
     }
 

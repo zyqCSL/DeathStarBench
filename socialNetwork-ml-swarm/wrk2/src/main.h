@@ -28,12 +28,19 @@
 struct config;
 
 static void *thread_main(void *);
+static void init_pstats(int threads);	// Yanqi
 static int connect_socket(thread *, connection *);
 static int reconnect_socket(thread *, connection *);
 
 static int calibrate(aeEventLoop *, long long, void *);
 static int sample_rate(aeEventLoop *, long long, void *);
 static int delayed_initial_connect(aeEventLoop *, long long, void *);
+static int change_throughput(aeEventLoop *, long long, void *);		// Yanqi
+static int report_stats(aeEventLoop *, long long, void *);
+static uint64_t get_tail(uint64_t** stats, int threads, int slot, double resolution, double end_percent, double target_percent); // util function
+static void get_tail_range(uint64_t** stats, int threads, int slot, double resolution, double end_percent, uint64_t* lat_vec, unsigned vec_size);
+static void print_per_resp_latency();
+
 static int check_timeouts(aeEventLoop *, long long, void *);
 
 static void socket_connected(aeEventLoop *, int, void *, int);
