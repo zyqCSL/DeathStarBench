@@ -235,7 +235,7 @@ def compose_post_for_each(session, addr):
 
     # media
     num_media = 0
-    if random.random() < 0.05:
+    if random.random() < 0.01:
       num_media = random.randint(1,3)
       print("num_media: " + str(num_media))
 
