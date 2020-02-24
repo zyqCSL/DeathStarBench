@@ -7,6 +7,8 @@
 #include "stats.h"
 #include "zmalloc.h"
 
+#include "units.h"
+
 typedef struct {
     char *name;
     int   type;
@@ -155,17 +157,115 @@ void script_request(lua_State *L, char **buf, size_t *len) {
     lua_pop(L, pop);
 }
 
+int script_get_load(lua_State *L, int* arr_len, uint64_t** time_arr, uint64_t** load_arr) {
+    lua_getglobal(L, "load_arr_len");
+    if(!lua_isnumber(L, -1)) {
+        perror("Error: load_arr_len is not a number\n");
+        return -1;
+    }
+    *arr_len = lua_tointeger(L, -1);
+    lua_pop(L, 1);
+
+    *time_arr = malloc(sizeof(uint64_t)*(*arr_len));
+    *load_arr = malloc(sizeof(uint64_t)*(*arr_len));
+
+    lua_getglobal(L, "load_intervals");
+    // lua tables start from 1
+    for(int i = 1; i <= *arr_len; ++i) {
+        lua_rawgeti(L, -1, i);
+        size_t len;
+        const char* str = lua_tolstring(L, -1, &len);
+        // printf("interval: %s\n", str);
+        char* buf = malloc(len);
+        memcpy(buf, str, len);
+        if(scan_time(buf, &((*time_arr)[i-1])) ) {    
+             printf("Error: wrong interval: %s\n", buf);
+             return -1;
+        }
+        // printf("interval: %lu\n", (*time_arr)[i-1]);
+        lua_pop(L, 1);
+        free(buf);
+    }
+    lua_pop(L, 1);
+
+    // lua tables start from 1
+    lua_getglobal(L, "load_rates");
+    for(int i = 1; i <= *arr_len; ++i) {
+        lua_rawgeti(L, -1, i);
+        size_t len;
+        const char* str = lua_tolstring(L, -1, &len);
+        // printf("load rate: %s\n", str);
+        char* buf = malloc(len);
+        memcpy(buf, str, len);
+        if(scan_metric(buf, &((*load_arr)[i-1])) ) {    
+             printf("Error: wrong load rate: %s\n", buf);
+             return -1;
+        }
+        // printf("load rate: %lu\n", (*load_arr)[i-1]);
+        lua_pop(L, 1);
+        free(buf);
+    }
+    lua_pop(L, 1);
+
+    return 0;
+}
+
+// // designed for 3-tier app
+// void script_response_get_latency(lua_State *L, int status, buffer *headers, buffer *body, latencies *l) {
+
+//     lua_getglobal(L, "response");
+//     lua_pushinteger(L, status);
+//     lua_newtable(L);
+
+//     for (char *c = headers->buffer; c < headers->cursor; ) {
+
+        
+//         c = buffer_pushlstring(L, c);
+//         c = buffer_pushlstring(L, c);
+//         lua_rawset(L, -3);
+        
+//     }
+    
+//     lua_pushlstring(L, body->buffer, body->cursor - body->buffer);
+//     // int err = lua_pcall(L, 3, 5, 0);
+        
+//     // if (err)
+//     //     fprintf(stderr, "lua_pcall: %s\n", lua_tostring(L,1));
+
+//     lua_call(L, 3, 6);
+
+//     // l->if_hit = lua_tointeger(L, -5);
+//     // l->nginx_lua = lua_tointeger(L, -4);
+//     // l->get = lua_tointeger(L, -3);
+//     // l->find = lua_tointeger(L, -2);
+//     // l->set = lua_tointeger(L, -1);
+//     l->if_hit = lua_tointeger(L, -6);
+//     l->nginx_lua = lua_tointeger(L, -5);
+//     l->get = lua_tointeger(L, -4);
+//     l->find = lua_tointeger(L, -3);
+//     l->set = lua_tointeger(L, -2);
+//     l->nginx_end = lua_tointeger(L, -1);
+    
+
+//     buffer_reset(headers);
+//     buffer_reset(body);
+//     lua_pop(L, 6);    
+// }
+
 void script_response(lua_State *L, int status, buffer *headers, buffer *body) {
     lua_getglobal(L, "response");
     lua_pushinteger(L, status);
     lua_newtable(L);
 
     for (char *c = headers->buffer; c < headers->cursor; ) {
+
+        
         c = buffer_pushlstring(L, c);
         c = buffer_pushlstring(L, c);
         lua_rawset(L, -3);
+        
     }
-
+    
     lua_pushlstring(L, body->buffer, body->cursor - body->buffer);
     lua_call(L, 3, 0);
 

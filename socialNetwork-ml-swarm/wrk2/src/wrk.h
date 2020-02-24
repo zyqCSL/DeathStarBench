@@ -29,6 +29,10 @@
 #define MAXO 16383
 #define MAXTHREADS 40
 
+typedef struct {
+    uint64_t latency;
+    uint64_t time;  // time that this response is received  
+} resp_record;
 
 typedef struct {
     pthread_t thread;
@@ -49,11 +53,33 @@ typedef struct {
     uint64_t mean;
     struct hdr_histogram *latency_histogram;
     struct hdr_histogram *real_latency_histogram;
+
     tinymt64_t rand;
     lua_State *L;
     errors errors;
     struct connection *cs;
-    FILE* ff;
+    FILE* ff;  
+    uint64_t monitor_event_cnt; 
+
+    int throughput_arr_len;
+    double* throughput_arr;
+    uint64_t* throughput_change_us;
+    int throughput_arr_ptr;
+
+    bool print_realtime_latency;
+    uint64_t stats_report_us;
+
+    uint64_t base_start_time;    // for debug
+    /* verify load change*/
+    uint64_t resp_received;
+    uint64_t last_stats_time;
+
+    bool record_per_request;
+    resp_record* per_req_records;
+    uint64_t per_req_limit;
+    uint64_t per_req_start;
+    uint64_t per_req_end;
+    uint64_t per_req_ctr;
 } thread;
 
 typedef struct {
@@ -88,5 +114,16 @@ typedef struct connection {
     uint64_t actual_latency_start[MAXO+1];
     // Internal tracking numbers (used purely for debugging):
 } connection;
+
+// typedef struct latencies {
+//     int if_hit;
+//     int nginx_lua;
+//     int set;
+//     int get;
+//     int find;
+
+//     uint64_t nginx_end;
+    
+// } latencies;
 
 #endif /* WRK_H */
