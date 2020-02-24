@@ -231,8 +231,8 @@ void ComposePostHandler::UploadMedia(
   std::string media_str = "[";
   if (!media.empty()) {
     for (auto &item : media) {
-      media_str += "{\"media\": " + item.media +
-          ", \"media_type\": \"" + item.media_type + "\"},";
+      media_str += "{\"media\": \"" + item.media +
+          "\", \"media_type\": \"" + item.media_type + "\"},";
     }
     media_str.pop_back();
   }
