@@ -232,7 +232,7 @@ async def compose_post(session, addr):
 
   # media
   num_media = 0
-  if random.random() < 0.9:
+  if random.random() < 0.05:
     num_media = random.randint(1,3)
   medium = '['
   media_types = '['
