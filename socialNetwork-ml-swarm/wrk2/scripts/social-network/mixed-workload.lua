@@ -234,7 +234,7 @@ local function compose_post()
   local medium = '['
   local media_types = '['
   local num_media = 0
-  if math.random() < 0.01 then
+  if math.random() < 0.05 then
     num_media = math.random(1,3)
   end
   for i = 0, num_media, 1 do
