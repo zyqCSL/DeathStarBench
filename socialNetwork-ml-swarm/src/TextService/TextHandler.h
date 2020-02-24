@@ -74,12 +74,12 @@ void TextHandler::UploadText(
     s = m.suffix().str();
   }
 
-  /**** debug *****/
-  std::string debug_str = "";
-  for(std::string& str: user_mentions)
-    debug_str += str + " ";
-  std::cout << "user-mention-str: " << debug_str << std::endl;
-  /**************/
+  // /**** debug *****/
+  // std::string debug_str = "";
+  // for(std::string& str: user_mentions)
+  //   debug_str += str + " ";
+  // std::cout << "user-mention-str: " << debug_str << std::endl;
+  // /**************/
 
   std::vector<std::string> urls;
   e = "(http://|https://)([a-zA-Z0-9_!~*'().&=+$%-]+)";
@@ -179,8 +179,8 @@ void TextHandler::UploadText(
     throw;
   }
 
-  std::cout << "text = " << text << std::endl;
-  std::cout << "text_filter = " << text_filter << std::endl;
+  // std::cout << "text = " << text << std::endl;
+  // std::cout << "text_filter = " << text_filter << std::endl;
 
   std::string updated_text;
   if(text_filter) {
@@ -199,7 +199,7 @@ void TextHandler::UploadText(
     updated_text = text;
   }
 
-  std::cout << "updated_text = " << updated_text << std::endl;
+  // std::cout << "updated_text = " << updated_text << std::endl;
 
   std::future<void> upload_text_future = std::async(
       std::launch::async, [&]() {

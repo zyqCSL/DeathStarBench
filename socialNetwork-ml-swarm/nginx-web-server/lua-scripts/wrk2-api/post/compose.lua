@@ -131,13 +131,13 @@ function _M.ComposePost()
 
   ngx.req.read_body()
 
-  -- debug starts --
-  local debug_data = ngx.req.get_body_data()
-  if debug_data then
-    ngx.log(ngx.ERR, "req_body_data:")
-    ngx.log(ngx.ERR, debug_data)
-  end
-  -- debug ends --
+  -- -- debug starts --
+  -- local debug_data = ngx.req.get_body_data()
+  -- if debug_data then
+  --   ngx.log(ngx.ERR, "req_body_data:")
+  --   ngx.log(ngx.ERR, debug_data)
+  -- end
+  -- -- debug ends --
 
   local post, err = ngx.req.get_post_args()
   if err then
