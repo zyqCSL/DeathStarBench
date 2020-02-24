@@ -34,7 +34,7 @@ class TextFilterServiceHandler:
         # vectorizer = joblib.load('./data/vectorizer.joblib')
         # model = joblib.load('./data/model.joblib')
         probs = self.model.predict(self.vectorizer.transform([text]))
-        return probs[0] < 0.5
+        return probs[0] > 0.5
 
 if __name__ == '__main__':
     host_addr = 'localhost'

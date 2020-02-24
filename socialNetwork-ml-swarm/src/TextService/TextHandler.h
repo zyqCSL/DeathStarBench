@@ -74,6 +74,13 @@ void TextHandler::UploadText(
     s = m.suffix().str();
   }
 
+  /**** debug *****/
+  std::string debug_str = "";
+  for(std::string& str: user_mentions)
+    debug_str += str + " ";
+  std::cout << "user-mention-str: " << debug_str << std::endl;
+  /**************/
+
   std::vector<std::string> urls;
   e = "(http://|https://)([a-zA-Z0-9_!~*'().&=+$%-]+)";
   s = text;

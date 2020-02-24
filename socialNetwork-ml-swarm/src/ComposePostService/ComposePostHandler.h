@@ -164,7 +164,7 @@ void ComposePostHandler::UploadText(
     const std::string &text,
     const std::map<std::string, std::string> &carrier) {
 
-  std::cout << "recv text: " << text << std::endl;
+  std::cout << "debug: recv text: " << text << std::endl;
   // Initialize a span
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
@@ -201,9 +201,13 @@ void ComposePostHandler::UploadText(
     throw se;
   }
 
+  std::cout << "debug: before _ComposeAndUpload" << std::endl;
+
   if (num_components_reply.as_integer() == NUM_COMPONENTS) {
     _ComposeAndUpload(req_id, writer_text_map);
   }
+
+  std::cout << "debug: after _ComposeAndUpload" << std::endl;
 
   span->Finish();
 
@@ -234,6 +238,9 @@ void ComposePostHandler::UploadMedia(
   }
   media_str += "]";
 
+
+  std::cout << "debug: media_str = " << media_str << std::endl;
+
   auto redis_client_wrapper = _redis_client_pool->Pop();
   if (!redis_client_wrapper) {
     ServiceException se;
@@ -260,6 +267,8 @@ void ComposePostHandler::UploadMedia(
     se.message = "Failed to retrieve message from Redis";
     throw se;
   }
+
+  std::cout << "debug: after media_str written to redis = " << std::endl;
 
   if (num_components_reply.as_integer() == NUM_COMPONENTS) {
     _ComposeAndUpload(req_id, writer_text_map);
@@ -446,6 +455,8 @@ void ComposePostHandler::_ComposeAndUpload(
     int64_t req_id,
     const std::map<std::string, std::string> &carrier) {
 
+  std::cout << "debug: In ComposePostHandler" << std::endl;
+
   auto redis_client_wrapper = _redis_client_pool->Pop();
   if (!redis_client_wrapper) {
     ServiceException se;
@@ -489,6 +500,8 @@ void ComposePostHandler::_ComposeAndUpload(
     throw se;
   }
 
+  std::cout << "debug: after get reply" << std::endl;
+
   if (!text_reply.ok() || !creator_reply.ok() || !media_reply.ok() ||
       !post_id_reply.ok() || !urls_reply.ok() || !user_mentions_reply.ok()) {
     ServiceException se;
@@ -509,6 +522,10 @@ void ComposePostHandler::_ComposeAndUpload(
       system_clock::now().time_since_epoch()).count();
   post.post_type = static_cast<PostType::type>(stoi(post_type_reply.as_string()));
 
+  std::cout << "debug: post.text = " << post.text << std::endl;
+  std::cout << "debug: creator_reply = " << creator_reply.as_string() << std::endl;
+
+
   LOG(debug) << creator_reply.as_string();
 
   json creator_json = json::parse(creator_reply.as_string());
@@ -516,6 +533,8 @@ void ComposePostHandler::_ComposeAndUpload(
   post.creator.username = creator_json["username"];
 
   LOG(debug) << user_mentions_reply.as_string();
+
+  std::cout << "debug: user_mentions_reply = " << user_mentions_reply.as_string() << std::endl;
 
   std::vector<int64_t> user_mentions_id;
 
@@ -528,6 +547,8 @@ void ComposePostHandler::_ComposeAndUpload(
     user_mentions_id.emplace_back(user_mention.user_id);
   }
 
+  std::cout << "debug: media_reply = " << media_reply.as_string() << std::endl;
+
   json media_json = json::parse(media_reply.as_string());
   for (auto &item : media_json) {
     Media media;
@@ -535,6 +556,8 @@ void ComposePostHandler::_ComposeAndUpload(
     media.media_type = item["media_type"];
     post.media.emplace_back(media);
   }
+
+  std::cout << "debug: urls_reply = " << urls_reply.as_string() << std::endl;
 
   json urls_json = json::parse(urls_reply.as_string());
   for (auto &item : urls_json) {
@@ -560,6 +583,8 @@ void ComposePostHandler::_ComposeAndUpload(
   upload_post_worker.join();
   upload_user_timeline_worker.join();
   upload_home_timeline_worker.join();
+
+  std::cout << "upload workers joined" << std::endl;
 
   // if (_user_timeline_teptr) {
   //   try{

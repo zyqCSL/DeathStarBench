@@ -77,9 +77,10 @@ void MediaHandler::UploadMedia(
     new_media.media = medium[i];
     new_media.media_type = media_types[i];
 
-    // debug
+    /********** debug ***********/
     std::cout << new_media.media_type << std::endl;
     std::cout << new_media.media << std::endl << std::endl;
+    /**************/
 
     media.emplace_back(new_media);
   }
