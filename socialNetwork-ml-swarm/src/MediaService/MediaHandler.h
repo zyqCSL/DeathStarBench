@@ -18,6 +18,7 @@
 #include "../ThriftClient.h"
 #include "../logger.h"
 #include "../tracing.h"
+#include "../gzip.h"
 
 #include <iostream>
 
@@ -74,7 +75,8 @@ void MediaHandler::UploadMedia(
   std::vector<Media> media;
   for (int i = 0; i < medium.size(); ++i) {
     Media new_media;
-    new_media.media = medium[i];
+    // new_media.media = medium[i];
+    new_media.media = Gzip::compress(medium[i]);
     new_media.media_type = media_types[i];
 
     // /********** debug ***********/
