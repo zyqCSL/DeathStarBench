@@ -48,7 +48,7 @@ for i = 1, media_jpg_num do
     -- ocr_img_jpg[i] = mime.b64(temp)
     media_jpg[i] = enc(f:read("*all"))
     f:close()
-    print(media_dir .. tostring(i) .. ".jpg cached")
+    -- print(media_dir .. tostring(i) .. ".jpg cached")
   else
     print(media_dir .. tostring(i) .. ".jpg doesn't exist")
   end
@@ -61,7 +61,7 @@ for i = 1, media_png_num do
     -- ocr_img_png[i] = mime.b64(temp)
     media_png[i] = enc(f:read("*all"))
     f:close()
-    print(media_dir .. tostring(i) .. ".png cached")
+    -- print(media_dir .. tostring(i) .. ".png cached")
   else
     print(media_dir .. tostring(i) .. ".png doesn't exist")
   end
