@@ -22,9 +22,11 @@ target_link_libraries(
     ${Boost_LIBRARIES}
     Boost::log
     Boost::log_setup
+    Boost::iostreams
     jaegertracing
     /usr/local/lib/libcpp_redis.a
     /usr/local/lib/libtacopie.a
+    ${ZLIB_LIBRARY}
 )
 
 install(TARGETS UserTimelineService DESTINATION ./)

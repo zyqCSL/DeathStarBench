@@ -14,6 +14,7 @@
 #include "../ClientPool.h"
 #include "../RedisClient.h"
 #include "../ThriftClient.h"
+#include "../gzip.h"
 
 namespace social_network {
 
@@ -105,6 +106,13 @@ void ReadHomeTimelineHandler::ReadHomeTimeline(
     throw;
   }
   _post_client_pool->Push(post_client_wrapper);
+
+  // decompress images
+  for(auto& post: _return) {
+    for(auto& media: post.media)
+      media.media = Gzip::decompress(media.media);
+  }
+
   span->Finish();
 }
 
