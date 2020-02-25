@@ -11,7 +11,7 @@ find_package(ZLIB REQUIRED)
 
 if(ZLIB_FOUND)
   include_directories(${ZLIB_INCLUDE_DIRS})
-  link_libraries(${ZLIB_LIBRARY})
+  message(STATUS "ZLIB library found")
 else(ZLIB_FOUND)
   message(FATAL_ERROR "ZLIB library not found")
 endif(ZLIB_FOUND)
@@ -44,7 +44,6 @@ endif()
 #    /usr/local/lib/libtacopie.a)
 
 
-set(CMAKE_CXX_FLAGS "-lz")
 set(THRIFT_GEN_CPP_DIR ../../gen-cpp)
 
 add_subdirectory(TextService)

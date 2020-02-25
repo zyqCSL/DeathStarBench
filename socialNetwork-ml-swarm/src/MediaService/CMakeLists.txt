@@ -15,13 +15,13 @@ target_link_libraries(
     MediaService
     nlohmann_json::nlohmann_json
     ${THRIFT_LIB}
-    ${ZLIB_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     ${Boost_LIBRARIES}
     Boost::log
     Boost::log_setup
     Boost::iostreams
     jaegertracing
+    ${ZLIB_LIBRARY}
 )
 
 install(TARGETS MediaService DESTINATION ./)
