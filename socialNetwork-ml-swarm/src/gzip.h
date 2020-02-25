@@ -1,6 +1,7 @@
 #ifndef __GZIP_H__
 #define __GZIP_H__
 
+#include <zlib.h>
 #include <sstream>
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/copy.hpp>
