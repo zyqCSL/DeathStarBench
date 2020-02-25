@@ -75,14 +75,22 @@ void MediaHandler::UploadMedia(
   std::vector<Media> media;
   for (int i = 0; i < medium.size(); ++i) {
     Media new_media;
+
+    /********** debug ***********/
+    std::cout << "before compression" << std::endl;
+    std::cout << new_media.media_type << std::endl;
+    std::cout << new_media.media << std::endl << std::endl;
+    /**************/
+
     // new_media.media = medium[i];
     new_media.media = Gzip::compress(medium[i]);
     new_media.media_type = media_types[i];
 
-    // /********** debug ***********/
-    // std::cout << new_media.media_type << std::endl;
-    // std::cout << new_media.media << std::endl << std::endl;
-    // /**************/
+    /********** debug ***********/
+    std::cout << "after compression" << std::endl;
+    std::cout << new_media.media_type << std::endl;
+    std::cout << new_media.media << std::endl << std::endl;
+    /**************/
 
     media.emplace_back(new_media);
   }
