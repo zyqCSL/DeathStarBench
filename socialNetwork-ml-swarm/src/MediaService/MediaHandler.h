@@ -84,7 +84,7 @@ void MediaHandler::UploadMedia(
     /**************/
 
     // new_media.media = medium[i];
-    std::string compressed_media = Gzip::compress(medium[i]);
+    std::string compressed_media = Gzip::compress(Base64::decode(medium[i]));
     new_media.media = Base64::encode(reinterpret_cast<const unsigned char*>(compressed_media.c_str()), compressed_media.length());
     new_media.media_type = media_types[i];
 

@@ -583,8 +583,6 @@ void ComposePostHandler::_ComposeAndUpload(
   upload_user_timeline_worker.join();
   upload_home_timeline_worker.join();
 
-  std::cout << "upload workers joined" << std::endl;
-
   // if (_user_timeline_teptr) {
   //   try{
   //     std::rethrow_exception(_user_timeline_teptr);
