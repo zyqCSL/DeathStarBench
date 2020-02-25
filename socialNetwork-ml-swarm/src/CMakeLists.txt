@@ -44,7 +44,7 @@ endif()
 #    /usr/local/lib/libtacopie.a)
 
 
-
+set(CMAKE_CXX_FLAGS "-lz")
 set(THRIFT_GEN_CPP_DIR ../../gen-cpp)
 
 add_subdirectory(TextService)
