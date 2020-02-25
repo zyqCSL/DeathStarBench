@@ -15,6 +15,7 @@
 #include "../RedisClient.h"
 #include "../ThriftClient.h"
 #include "../gzip.h"
+#include "../base64.h"
 
 namespace social_network {
 
@@ -109,8 +110,10 @@ void ReadHomeTimelineHandler::ReadHomeTimeline(
 
   // decompress images
   for(auto& post: _return) {
-    for(auto& media: post.media)
-      media.media = Gzip::decompress(media.media);
+    for(auto& media: post.media) {
+      std::string binary_media = Gzip::decompress(Base64::decode(media.media));
+      media.media = Base64::encode(reinterpret_cast<const unsigned char*>(binary_media.c_str()), binary_media.length());
+    }
   }
 
   span->Finish();
