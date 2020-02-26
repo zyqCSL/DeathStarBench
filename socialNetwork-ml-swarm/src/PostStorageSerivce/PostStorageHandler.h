@@ -63,7 +63,7 @@ void PostStorageHandler::StorePost(
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   // do not record mongodb insert time here since its asynchronous
-  std::thread([]
+  std::thread([=]
     {
       LOG(error) << "StorePost thread req_id = " << req_id << "post_id = " << post.post_id;
       mongoc_client_t *mongodb_client = mongoc_client_pool_pop(
