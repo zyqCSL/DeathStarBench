@@ -239,7 +239,7 @@ void ComposePostHandler::UploadMedia(
   }
   media_str += "]";
 
-  std::cout << "debug: media_str = " << media_str << std::endl;
+  // std::cout << "debug: media_str = " << media_str << std::endl;
 
   auto redis_client_wrapper = _redis_client_pool->Pop();
   if (!redis_client_wrapper) {

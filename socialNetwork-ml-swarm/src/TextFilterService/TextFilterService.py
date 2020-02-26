@@ -30,7 +30,7 @@ class TextFilterServiceHandler:
 
     def UploadText(self, req_id, text, carrier):
         # assume 1 text snippet in each post
-        print 'recv text = ', text
+        # print 'recv text = ', text
         # vectorizer = joblib.load('./data/vectorizer.joblib')
         # model = joblib.load('./data/model.joblib')
         probs = self.model.predict(self.vectorizer.transform([text]))

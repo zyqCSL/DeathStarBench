@@ -77,22 +77,22 @@ void MediaHandler::UploadMedia(
   for (int i = 0; i < medium.size(); ++i) {
     Media new_media;
 
-    /********** debug ***********/
-    std::cout << "before compression" << std::endl;
-    std::cout << new_media.media_type << std::endl;
-    std::cout << new_media.media << std::endl << std::endl;
-    /**************/
+    // /********** debug ***********/
+    // std::cout << "before compression" << std::endl;
+    // std::cout << new_media.media_type << std::endl;
+    // std::cout << new_media.media << std::endl << std::endl;
+    // /**************/
 
     // new_media.media = medium[i];
     std::string compressed_media = Gzip::compress(Base64::decode(medium[i]));
     new_media.media = Base64::encode(reinterpret_cast<const unsigned char*>(compressed_media.c_str()), compressed_media.length());
     new_media.media_type = media_types[i];
 
-    /********** debug ***********/
-    std::cout << "after compression" << std::endl;
-    std::cout << new_media.media_type << std::endl;
-    std::cout << new_media.media << std::endl << std::endl;
-    /**************/
+    // /********** debug ***********/
+    // std::cout << "after compression" << std::endl;
+    // std::cout << new_media.media_type << std::endl;
+    // std::cout << new_media.media << std::endl << std::endl;
+    // /**************/
 
     media.emplace_back(new_media);
   }
