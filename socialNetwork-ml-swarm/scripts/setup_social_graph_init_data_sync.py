@@ -414,7 +414,8 @@ if __name__ == '__main__':
 
   # nginx is on ath-3
   # addr = "http://127.0.0.1:8080"
-  addr = "http://128.253.128.245:8080"
+  addr = "http://128.253.128.245:8080" # ath-9
+  addr = "http://128.253.128.76:8080" # ath-8
 
   register(addr, nodes)
   follow(addr, edges)

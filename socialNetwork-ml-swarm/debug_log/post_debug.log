@@ -1,0 +1,10 @@
+In SetUpTracer
+jaeger set up done
+before loading_config_file
+after loading_config_file
+post-storage-service post = 9090
+in init_memcached_client_pool service_name = post-storage
+in init_memcached_client_pool config_str = --SERVER=post-storage-memcached:11211
+memcached client pool created
+mongodb client pool created
+Starting the post-storage-service server...
