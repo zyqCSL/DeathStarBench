@@ -50,6 +50,8 @@ void PostStorageHandler::StorePost(
     int64_t req_id, const social_network::Post &post,
     const std::map<std::string, std::string> &carrier) {
 
+  LOG(error) << "StorePost req_id = " << req_id << "post_id = " << post.post_id;
+
   // Initialize a span
   TextMapReader reader(carrier);
   std::map<std::string, std::string> writer_text_map;
@@ -61,8 +63,9 @@ void PostStorageHandler::StorePost(
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   // do not record mongodb insert time here since its asynchronous
-  std::thread([&]
+  std::thread([]
     {
+      LOG(error) << "StorePost thread req_id = " << req_id << "post_id = " << post.post_id;
       mongoc_client_t *mongodb_client = mongoc_client_pool_pop(
           _mongodb_client_pool);
       if (!mongodb_client) {
