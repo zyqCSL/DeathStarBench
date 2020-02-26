@@ -121,6 +121,8 @@ void UniqueIdHandler::UploadUniqueId(
   LOG(debug) << "The post_id of the request "
       << req_id << " is " << post_id;
 
+  std::cout << "req_id = "<< req_id << ", post_id = " << post_id << std::endl;
+
   // Upload to compose post service
   auto compose_post_client_wrapper = _compose_client_pool->Pop();
   if (!compose_post_client_wrapper) {
