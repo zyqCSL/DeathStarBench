@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <future>
+#include <thread> 
 
 #include <mongoc.h>
 #include <libmemcached/memcached.h>
@@ -60,8 +61,8 @@ void PostStorageHandler::StorePost(
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
   // do not record mongodb insert time here since its asynchronous
-  std::future<void> store_post_future = std::async(
-    std::launch::async, [&]() {
+  std::future<void> store_post_future = std::thread([&]
+    {
       mongoc_client_t *mongodb_client = mongoc_client_pool_pop(
           _mongodb_client_pool);
       if (!mongodb_client) {
@@ -163,7 +164,7 @@ void PostStorageHandler::StorePost(
       bson_destroy(new_doc);
       mongoc_collection_destroy(collection);
       mongoc_client_pool_push(_mongodb_client_pool, mongodb_client);
-    });
+    }).detach();
     
     span->Finish();
 }
