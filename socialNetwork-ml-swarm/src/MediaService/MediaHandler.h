@@ -11,8 +11,11 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <thread>
+#include <future>
 
 #include "../../gen-cpp/MediaService.h"
+#include "../../gen-cpp/MediaFilterService.h"
 #include "../../gen-cpp/ComposePostService.h"
 #include "../ClientPool.h"
 #include "../ThriftClient.h"
@@ -34,7 +37,8 @@ using std::chrono::system_clock;
 
 class MediaHandler : public MediaServiceIf {
  public:
-  explicit MediaHandler(ClientPool<ThriftClient<ComposePostServiceClient>> *);
+  explicit MediaHandler(ClientPool<ThriftClient<ComposePostServiceClient>> *, 
+                        ClientPool<ThriftClient<MediaFilterServiceClient>> *);
   ~MediaHandler() override = default;
 
   void UploadMedia(int64_t, const std::vector<std::string> &,
@@ -43,11 +47,14 @@ class MediaHandler : public MediaServiceIf {
 
  private:
   ClientPool<ThriftClient<ComposePostServiceClient>> *_compose_client_pool;
+  ClientPool<ThriftClient<MediaFilterServiceClient>> *_media_filter_client_pool;
 };
 
 MediaHandler::MediaHandler(
-    ClientPool<ThriftClient<ComposePostServiceClient>> *compose_client_pool) {
+    ClientPool<ThriftClient<ComposePostServiceClient>> *compose_client_pool,
+    ClientPool<ThriftClient<MediaFilterServiceClient>> *media_filter_client_pool) {
   _compose_client_pool = compose_client_pool;
+  _media_filter_client_pool = media_filter_client_pool;
 }
 
 void MediaHandler::UploadMedia(
@@ -73,47 +80,95 @@ void MediaHandler::UploadMedia(
     throw se;
   }
 
-  std::vector<Media> media;
-  for (int i = 0; i < medium.size(); ++i) {
-    Media new_media;
+  // spawn a new thread so that we don't wait on time-consuming image filtering
+  std::thread([+] 
+  {
+    // media-filter-service
+    std::future<std::vector<bool>> media_filter_future = std::async(
+        std::launch::async, [&](){
+          auto media_filter_client_wrapper = _media_filter_client_pool->Pop();
+          if (!media_filter_client_wrapper) {
+            ServiceException se;
+            se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
+            se.message = "Failed to connected to media-filter-service";
+            throw se;
+          }
+          std::vector<bool> return_filter;
+          auto media_filter_client = media_filter_client_wrapper->GetClient();
+          try {
+            return_filter = media_filter_client->UploadMedia(req_id, media_types, medium, writer_text_map);
+          } catch (...) {
+            LOG(error) << "Failed to upload media to media-filter-service";
+            _media_filter_client_pool->Push(media_filter_client_wrapper);
+            throw;
+          }    
+          
+          _media_filter_client_pool->Push(media_filter_client_wrapper);
+          return return_filter;
+        });
 
-    // /********** debug ***********/
-    // std::cout << "before compression" << std::endl;
-    // std::cout << new_media.media_type << std::endl;
-    // std::cout << new_media.media << std::endl << std::endl;
-    // /**************/
+    std::vector<bool> media_filter;
+    try {
+      media_filter = media_filter_future.get();
+    } catch (...) {
+      LOG(error) << "Failed to get media-filter from media-filter-service";
+      throw;
+    }
 
-    // new_media.media = medium[i];
-    std::string compressed_media = Gzip::compress(Base64::decode(medium[i]));
-    new_media.media = Base64::encode(reinterpret_cast<const unsigned char*>(compressed_media.c_str()), compressed_media.length());
-    new_media.media_type = media_types[i];
+    /********** debug ***********/
+    std::string debug_filer_str = "image_filter: ";
+    for(int i = 0; i < media_filter.size(); ++i)
+      debug_filer_str += media_types[i] + " " + std::string(f) + "; ";
+    std::cout << debug_filer_str << std::endl;
+    /**************/
 
-    // /********** debug ***********/
-    // std::cout << "after compression" << std::endl;
-    // std::cout << new_media.media_type << std::endl;
-    // std::cout << new_media.media << std::endl << std::endl;
-    // /**************/
+    std::vector<Media> media;
+    for (int i = 0; i < medium.size(); ++i) {
+      // nsfw images are removed
+      if(!media_filter[i])
+        continue;
 
-    media.emplace_back(new_media);
-  }
+      Media new_media;
 
-  // Upload to compose post service
-  auto compose_post_client_wrapper = _compose_client_pool->Pop();
-  if (!compose_post_client_wrapper) {
-    ServiceException se;
-    se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
-    se.message = "Failed to connected to compose-post-service";
-    throw se;
-  }
-  auto compose_post_client = compose_post_client_wrapper->GetClient();
-  try {
-    compose_post_client->UploadMedia(req_id, media, writer_text_map);
-  } catch (...) {
+      // /********** debug ***********/
+      // std::cout << "before compression" << std::endl;
+      // std::cout << new_media.media_type << std::endl;
+      // std::cout << new_media.media << std::endl << std::endl;
+      // /**************/
+
+      // new_media.media = medium[i];
+      std::string compressed_media = Gzip::compress(Base64::decode(medium[i]));
+      new_media.media = Base64::encode(reinterpret_cast<const unsigned char*>(compressed_media.c_str()), compressed_media.length());
+      new_media.media_type = media_types[i];
+
+      // /********** debug ***********/
+      // std::cout << "after compression" << std::endl;
+      // std::cout << new_media.media_type << std::endl;
+      // std::cout << new_media.media << std::endl << std::endl;
+      // /**************/
+
+      media.emplace_back(new_media);
+    }
+
+    // Upload to compose post service
+    auto compose_post_client_wrapper = _compose_client_pool->Pop();
+    if (!compose_post_client_wrapper) {
+      ServiceException se;
+      se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
+      se.message = "Failed to connected to compose-post-service";
+      throw se;
+    }
+    auto compose_post_client = compose_post_client_wrapper->GetClient();
+    try {
+      compose_post_client->UploadMedia(req_id, media, writer_text_map);
+    } catch (...) {
+      _compose_client_pool->Push(compose_post_client_wrapper);
+      LOG(error) << "Failed to upload media to compose-post-service";
+      throw;
+    }
     _compose_client_pool->Push(compose_post_client_wrapper);
-    LOG(error) << "Failed to upload media to compose-post-service";
-    throw;
-  }
-  _compose_client_pool->Push(compose_post_client_wrapper);
+  }).detach();
+
   span->Finish();
 
 }

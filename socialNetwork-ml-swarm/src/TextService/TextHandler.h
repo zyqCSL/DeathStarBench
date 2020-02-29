@@ -6,7 +6,6 @@
 #include <regex>
 #include <future>
 
-
 #include "../../gen-cpp/TextService.h"
 #include "../../gen-cpp/ComposePostService.h"
 #include "../../gen-cpp/UserMentionService.h"

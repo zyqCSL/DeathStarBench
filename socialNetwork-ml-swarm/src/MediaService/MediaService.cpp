@@ -33,13 +33,24 @@ int main(int argc, char *argv[]) {
   int compose_conns = config_json["compose-post-service"]["connections"];
   int compose_timeout = config_json["compose-post-service"]["timeout_ms"];
 
+  std::string media_filter_addr = config_json["media-filter-service"]["addr"];
+  int media_filter_port = config_json["media-filter-service"]["port"];
+  int media_filter_conns = config_json["media-filter-service"]["connections"];
+  int media_filter_timeout = config_json["media-filter-service"]["timeout_ms"];
+
   ClientPool<ThriftClient<ComposePostServiceClient>> compose_post_client_pool(
       "compose-post", compose_addr, compose_port, 0, compose_conns, compose_timeout);
+
+  ClientPool<ThriftClient<MediaFilterServiceClient>> media_filter_client_pool(
+      "media-filter-service", media_filter_addr,
+      media_filter_port, 0, media_filter_conns, media_filter_timeout);
+
 
   TThreadedServer server (
       std::make_shared<MediaServiceProcessor>(
           std::make_shared<MediaHandler>(
-              &compose_post_client_pool)),
+              &compose_post_client_pool,
+              &media_filter_client_pool)),
       std::make_shared<TServerSocket>("0.0.0.0", port),
       std::make_shared<TFramedTransportFactory>(),
       std::make_shared<TBinaryProtocolFactory>()
