@@ -81,7 +81,7 @@ void MediaHandler::UploadMedia(
   }
 
   // spawn a new thread so that we don't wait on time-consuming image filtering
-  std::thread([+] 
+  std::thread([=] 
   {
     // media-filter-service
     std::future<std::vector<bool>> media_filter_future = std::async(
