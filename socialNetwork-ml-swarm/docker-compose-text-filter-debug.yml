@@ -11,7 +11,7 @@ services:
 #      - /etc/resolv.conf:/etc/resolv.conf
 
   text-filter-service:
-    image: yz2297/social-network-text-filer
+    image: yz2297/social-network-text-filter
     hostname: text-filter-service
     container_name: social-ml-text-filter
     ports:

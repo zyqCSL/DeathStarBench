@@ -10,11 +10,9 @@ services:
 #      - /var/run/docker.sock:/var/run/docker.sock
 #      - /etc/resolv.conf:/etc/resolv.conf
 
-  text-filter-service:
-    image: yz2297/social-network-text-filter
-    hostname: text-filter-service
-    container_name: social-ml-text-filter
+  test-nsfw-keras:
+    image: yz2297/social-network-media-filter
+    container_name: social-network-media-filter
     # ports:
     #   - 40000:40000
     restart: always
-    # entrypoint: SocialGraphService

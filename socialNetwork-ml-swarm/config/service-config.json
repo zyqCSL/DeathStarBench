@@ -96,6 +96,12 @@
     "connections": 512,
     "timeout_ms": 1000
   },
+  "media-filter-service": {
+    "addr": "media-filter-service",
+    "port": 40000,
+    "connections": 512,
+    "timeout_ms": 1000
+  },
   "text-service": {
     "addr": "text-service",
     "port": 9090,
