@@ -96,7 +96,7 @@ void MediaHandler::UploadMedia(
           std::vector<bool> return_filter;
           auto media_filter_client = media_filter_client_wrapper->GetClient();
           try {
-            return_filter = media_filter_client->UploadMedia(req_id, media_types, medium, writer_text_map);
+            media_filter_client->UploadMedia(return_filter, req_id, media_types, medium, writer_text_map);
           } catch (...) {
             LOG(error) << "Failed to upload media to media-filter-service";
             _media_filter_client_pool->Push(media_filter_client_wrapper);
@@ -118,7 +118,7 @@ void MediaHandler::UploadMedia(
     /********** debug ***********/
     std::string debug_filer_str = "image_filter: ";
     for(int i = 0; i < media_filter.size(); ++i)
-      debug_filer_str += media_types[i] + " " + std::string(f) + "; ";
+      debug_filer_str += media_types[i] + " " + std::string(media_filter[i]) + "; ";
     std::cout << debug_filer_str << std::endl;
     /**************/
 
