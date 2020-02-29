@@ -18,14 +18,15 @@ from PIL import Image
 import base64
 import StringIO
 
-WeightsPath = "./nsfw_mobilenet2.224x224.h5"
+ModelPath = "./nsfw_mobilenet2.224x224.h5"
 ImageSize = (224, 224)
 Categories = ['drawings', 'hentai', 'neutral', 'porn', 'sexy']
 
 class MediaFilterServiceHandler:
     def __init__(self):
-        global WeightsPath
-        self.nsfw_model = keras.models.load_model(model_path)
+        global ModelPath
+        self.nsfw_model = keras.models.load_model(ModelPath)
+        self.nsfw_model._make_predict_function()
         print("nsfw model loaded")
 
     def _load_base64_image(self, base64_str, image_size):
@@ -33,7 +34,24 @@ class MediaFilterServiceHandler:
         tempBuff = StringIO.StringIO()
         tempBuff.write(img_str)
         tempBuff.seek(0) #need to jump back to the beginning before handing it off to PIL
-        image = Image.open(tempBuff).resize(image_size)
+        image = Image.open(tempBuff)
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image = image.resize(image_size)
+
+        # print("image data")        
+        # print(type(image))
+        # print(image.format)
+        # print(image.mode)
+        # print(image.size)
+
+        image = keras.preprocessing.image.img_to_array(image)
+        # print("array data")
+        # print(type(image))
+        # print(image.shape)
+        # print(' ')
+
+        image /= 255
         return image
 
     def _predict(self, base64_images, image_size):
@@ -58,10 +76,13 @@ class MediaFilterServiceHandler:
     def UploadMedia(self, req_id, media_types, medium, carrier):
         global ImageSize
         print(media_types)
+        start = time.time()
         base64_images = []
         for img in medium:
             base64_images.append(img)
-        _return = self.model._predict(base64_images, ImageSize)
+        _return = self._predict(base64_images, ImageSize)
+        end = time.time()
+        print("inference time = %.2fs", end - start)
         print(_return)
         return _return
 

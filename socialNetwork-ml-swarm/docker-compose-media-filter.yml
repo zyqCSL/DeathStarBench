@@ -10,8 +10,9 @@ services:
 #      - /var/run/docker.sock:/var/run/docker.sock
 #      - /etc/resolv.conf:/etc/resolv.conf
 
-  test-nsfw-keras:
+  media-filter-service:
     image: yz2297/social-network-media-filter
+    hostname: media-filter-service
     container_name: social-network-media-filter
     # ports:
     #   - 40000:40000

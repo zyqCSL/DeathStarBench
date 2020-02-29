@@ -12,24 +12,23 @@ from thrift.protocol import TBinaryProtocol
 import base64
 
 def main():
-  images_dir = '../../wrk2/scripts/social-network/images/'
+  images_dir = '../wrk2/scripts/social-network/images/'
   medium = []
   media_types = []
-  for i in range(1, 3):
+  for i in [7, 9]:
     media_types += ['jpg']
-    with open(str(i) + ".jpg", "rb") as img_file:
+    with open(images_dir + str(i) + ".jpg", "rb") as img_file:
       base64_img = base64.b64encode(img_file.read()).decode('utf-8')
-      print(base64_img)
+      # print(base64_img)
+      medium.append(base64_img)
+
+    with open(images_dir + str(i) + ".png", "rb") as img_file:
+      base64_img = base64.b64encode(img_file.read()).decode('utf-8')
+      # print(base64_img)
       medium.append(base64_img)
     media_types += ['png']
 
-    with open(str(i) + ".png", "rb") as img_file:
-      base64_img = base64.b64encode(img_file.read()).decode('utf-8')
-      print(base64_img)
-      medium.append(base64_img)
-    media_types += ['png']
-
-  socket = TSocket.TSocket(host='localhost', port=40000)
+  socket = TSocket.TSocket(host='ath-9.ece.cornell.edu', port=40000)
   transport = TTransport.TFramedTransport(socket)
   protocol = TBinaryProtocol.TBinaryProtocol(transport)
   client = MediaFilterService.Client(protocol)
