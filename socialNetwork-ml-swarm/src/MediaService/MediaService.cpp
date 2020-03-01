@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
 
   ClientPool<ThriftClient<MediaFilterServiceClient>> media_filter_client_pool(
       "media-filter-service", media_filter_addr,
-      media_filter_port, 0, media_filter_conns, media_filter_timeout);
+      media_filter_port, 0, media_filter_conns, media_filter_timeout, media_filter_timeout);
 
 
   TThreadedServer server (

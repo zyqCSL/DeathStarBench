@@ -85,6 +85,7 @@ void MediaHandler::UploadMedia(
     std::cout << "images:" << std::endl;
     for(const std::string& img: medium)
       std::cout << img << ";" << std::endl;
+  }
 
   // spawn a new thread so that we don't wait on time-consuming image filtering
   std::thread([=] 
