@@ -16,4 +16,6 @@ services:
     container_name: social-network-media-filter-debug
     ports:
       - 40000:40000
+    volumes:
+      - ./debug_log:/debug_log
     restart: always

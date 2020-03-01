@@ -99,8 +99,8 @@
   "media-filter-service": {
     "addr": "media-filter-service",
     "port": 40000,
-    "connections": 2048,
-    "timeout_ms": 60000
+    "connections": 1024,
+    "timeout_ms": 30000
   },
   "text-service": {
     "addr": "text-service",

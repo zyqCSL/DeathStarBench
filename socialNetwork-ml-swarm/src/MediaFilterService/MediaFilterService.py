@@ -34,7 +34,7 @@ class MediaFilterServiceHandler:
         # print("nsfw model loaded")
 
     def _load_base64_image(self, base64_str, image_size):
-        base64_str += "=" * ((4 - len(base64_str) % 4) % 4)  # restore stripped '='s
+        # base64_str += "=" * ((4 - len(base64_str) % 4) % 4)  # restore stripped '='s
         img_str = base64.b64decode(base64_str)
         tempBuff = StringIO.StringIO()
         tempBuff.write(img_str)
@@ -44,17 +44,18 @@ class MediaFilterServiceHandler:
             image = image.convert('RGB')
         image = image.resize(image_size)
 
-        print("image data")        
-        print(type(image))
-        print(image.format)
-        print(image.mode)
-        print(image.size)
+        logging.error("image data")        
+        logging.error(type(image))
+        logging.error(image.format)
+        logging.error(image.mode)
+        logging.error(image.size)
 
         image = keras.preprocessing.image.img_to_array(image)
-        print("array data")
-        print(type(image))
-        print(image.shape)
-        print(' ')
+
+        logging.error("array data")
+        logging.error(type(image))
+        logging.error(image.shape)
+        logging.error(' ')
 
         image /= 255
         return image
@@ -84,11 +85,9 @@ class MediaFilterServiceHandler:
         if len(medium) == 0:
             return []
         print(media_types)
+        print(medium)
         start = time.time()
-        base64_images = []
-        for img in medium:
-            base64_images.append(img)
-        _return = self._predict(base64_images, ImageSize)
+        _return = self._predict(medium, ImageSize)
         # _return = []
         # try:
         #     _return = self._predict(base64_images, ImageSize)
