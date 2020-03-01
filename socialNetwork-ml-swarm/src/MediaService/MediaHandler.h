@@ -84,35 +84,37 @@ void MediaHandler::UploadMedia(
   std::thread([=] 
   {
     // media-filter-service
-    std::future<std::vector<bool>> media_filter_future = std::async(
-        std::launch::async, [&](){
-          auto media_filter_client_wrapper = _media_filter_client_pool->Pop();
-          if (!media_filter_client_wrapper) {
-            ServiceException se;
-            se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
-            se.message = "Failed to connected to media-filter-service";
-            throw se;
-          }
-          std::vector<bool> return_filter;
-          auto media_filter_client = media_filter_client_wrapper->GetClient();
-          try {
-            media_filter_client->UploadMedia(return_filter, req_id, media_types, medium, writer_text_map);
-          } catch (...) {
-            LOG(error) << "Failed to upload media to media-filter-service";
-            _media_filter_client_pool->Push(media_filter_client_wrapper);
-            throw;
-          }    
-          
-          _media_filter_client_pool->Push(media_filter_client_wrapper);
-          return return_filter;
-        });
-
     std::vector<bool> media_filter;
-    try {
-      media_filter = media_filter_future.get();
-    } catch (...) {
-      LOG(error) << "Failed to get media-filter from media-filter-service";
-      throw;
+    if(medium.size() > 0) {
+      std::future<std::vector<bool>> media_filter_future = std::async(
+          std::launch::async, [&](){
+            auto media_filter_client_wrapper = _media_filter_client_pool->Pop();
+            if (!media_filter_client_wrapper) {
+              ServiceException se;
+              se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
+              se.message = "Failed to connected to media-filter-service";
+              throw se;
+            }
+            std::vector<bool> return_filter;
+            auto media_filter_client = media_filter_client_wrapper->GetClient();
+            try {
+              media_filter_client->UploadMedia(return_filter, req_id, media_types, medium, writer_text_map);
+            } catch (...) {
+              LOG(error) << "Failed to upload media to media-filter-service";
+              _media_filter_client_pool->Push(media_filter_client_wrapper);
+              throw;
+            }    
+            
+            _media_filter_client_pool->Push(media_filter_client_wrapper);
+            return return_filter;
+          });
+
+      try {
+        media_filter = media_filter_future.get();
+      } catch (...) {
+        LOG(error) << "Failed to get media-filter from media-filter-service";
+        throw;
+      }
     }
 
     /********** debug ***********/

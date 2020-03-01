@@ -39,17 +39,17 @@ class MediaFilterServiceHandler:
             image = image.convert('RGB')
         image = image.resize(image_size)
 
-        # print("image data")        
-        # print(type(image))
-        # print(image.format)
-        # print(image.mode)
-        # print(image.size)
+        print("image data")        
+        print(type(image))
+        print(image.format)
+        print(image.mode)
+        print(image.size)
 
         image = keras.preprocessing.image.img_to_array(image)
-        # print("array data")
-        # print(type(image))
-        # print(image.shape)
-        # print(' ')
+        print("array data")
+        print(type(image))
+        print(image.shape)
+        print(' ')
 
         image /= 255
         return image
@@ -75,12 +75,20 @@ class MediaFilterServiceHandler:
 
     def UploadMedia(self, req_id, media_types, medium, carrier):
         global ImageSize
+        if len(medium) == 0:
+            return []
         print(media_types)
         start = time.time()
         base64_images = []
         for img in medium:
             base64_images.append(img)
-        _return = self._predict(base64_images, ImageSize)
+        _return = []
+        try:
+            _return = self._predict(base64_images, ImageSize)
+        except:
+            print("Error when predicting")
+            for i in range(0, len(medium)):
+                _return.append(False)
         end = time.time()
         print("inference time = %.2fs", end - start)
         print(_return)
