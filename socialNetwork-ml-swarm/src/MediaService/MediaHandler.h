@@ -59,8 +59,8 @@ MediaHandler::MediaHandler(
 
 void MediaHandler::UploadMedia(
     int64_t req_id,
-    const std::vector<std::string> &_media_types,
-    const std::vector<std::string> &_medium,
+    const std::vector<std::string> &media_types,
+    const std::vector<std::string> &medium,
     const std::map<std::string, std::string> &carrier) {
 
   // Initialize a span
@@ -80,8 +80,6 @@ void MediaHandler::UploadMedia(
     throw se;
   }
 
-  std::vector<std::string> medium = _medium;
-  std::vector<std::string> media_types = _media_types;
   // spawn a new thread so that we don't wait on time-consuming image filtering
   std::thread([=] 
   {
@@ -89,6 +87,7 @@ void MediaHandler::UploadMedia(
     std::vector<bool> media_filter;
     std::cout << "medium.size() = " << medium.size() << std::endl;
     if(medium.size() > 0) {
+      std::cout << "images:" << std::endl;
       for(const std::string& img: medium)
         std::cout << img << ";" << std::endl;
       std::future<std::vector<bool>> media_filter_future = std::async(
