@@ -7,4 +7,4 @@ docker build --no-cache -f ./Dockerfile -t yz2297/social-network-ml-swarm .
 # docker build --no-cache -f ./MediaFilterDockerfile -t yz2297/social-network-media-filter .
 
 
-# sudo ~/wrk2_archive/change_load_wrk2_general/wrk2_periodic_stats_sample_full_percentile/wrk -p 95 -r 0.5 -t 10 -S 0.2 -i 1.0 -D exp -t 10 -c 200 -d 300s -s ./wrk2/scripts/social-network/mixed-workload.lua http://128.253.128.245:8080 -R 250
+# sudo ~/wrk2_archive/change_load_wrk2_general/wrk2_periodic_stats_sample_full_percentile/wrk -p 95 -r 0.5 -t 10 -S 0.2 -i 1.0 -D exp -t 10 -c 200 -d 180s -s ./wrk2/scripts/social-network/mixed-workload.lua http://128.253.128.245:8080 -R 1000

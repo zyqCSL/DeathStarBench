@@ -34,6 +34,7 @@ class MediaFilterServiceHandler:
         # print("nsfw model loaded")
 
     def _load_base64_image(self, base64_str, image_size):
+        base64_str += "=" * ((4 - len(base64_str) % 4) % 4)  # restore stripped '='s
         img_str = base64.b64decode(base64_str)
         tempBuff = StringIO.StringIO()
         tempBuff.write(img_str)
