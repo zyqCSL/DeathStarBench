@@ -117,8 +117,12 @@ void MediaHandler::UploadMedia(
 
     /********** debug ***********/
     std::string debug_filer_str = "image_filter: ";
-    for(int i = 0; i < media_filter.size(); ++i)
-      debug_filer_str += media_types[i] + " " + std::string(media_filter[i]) + "; ";
+    for(int i = 0; i < media_filter.size(); ++i) {
+      if(media_filter[i])
+        debug_filer_str += media_types[i] + " true; ";
+      else
+        debug_filer_str += media_types[i] + " false; ";
+    }
     std::cout << debug_filer_str << std::endl;
     /**************/
 
