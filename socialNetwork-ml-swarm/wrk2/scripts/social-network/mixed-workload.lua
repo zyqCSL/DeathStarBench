@@ -35,7 +35,7 @@ function dec(data)
 end
 
 benchmark_dir = "/home/yz2297/Software/deathstar_suite/socialNetwork-ml-swarm/DeathStarBench/socialNetwork-ml-swarm"
-media_dir = benchmark_dir .. "/wrk2/scripts/social-network/images/"
+media_dir = benchmark_dir .. "/wrk2/scripts/social-network/base64_images/"
 media_jpg = {}
 media_jpg_num = 17
 media_png  = {}
@@ -46,7 +46,8 @@ for i = 1, media_jpg_num do
   if f then 
     -- local temp = f:read("*all")
     -- ocr_img_jpg[i] = mime.b64(temp)
-    media_jpg[i] = enc(f:read("*all"))
+    -- media_jpg[i] = enc(f:read("*all"))
+    media_jpg[i] = f:read("*all")
     f:close()
     -- print(media_dir .. tostring(i) .. ".jpg cached")
   else
@@ -59,7 +60,8 @@ for i = 1, media_png_num do
   if f then 
     -- local temp = f:read("*all")
     -- ocr_img_png[i] = mime.b64(temp)
-    media_png[i] = enc(f:read("*all"))
+    -- media_png[i] = enc(f:read("*all"))
+    media_png[i] = f:read("*all")
     f:close()
     -- print(media_dir .. tostring(i) .. ".png cached")
   else
