@@ -21,13 +21,17 @@ import StringIO
 ModelPath = "./nsfw_mobilenet2.224x224.h5"
 ImageSize = (224, 224)
 Categories = ['drawings', 'hentai', 'neutral', 'porn', 'sexy']
+NSFW_Model = keras.models.load_model(ModelPath)
+NSFW_Model._make_predict_function()
+print("nsfw model loaded")
 
 class MediaFilterServiceHandler:
     def __init__(self):
-        global ModelPath
-        self.nsfw_model = keras.models.load_model(ModelPath)
-        self.nsfw_model._make_predict_function()
-        print("nsfw model loaded")
+        pass
+        # global ModelPath
+        # self.nsfw_model = keras.models.load_model(ModelPath)
+        # self.nsfw_model._make_predict_function()
+        # print("nsfw model loaded")
 
     def _load_base64_image(self, base64_str, image_size):
         img_str = base64.b64decode(base64_str)
@@ -55,13 +59,14 @@ class MediaFilterServiceHandler:
         return image
 
     def _predict(self, base64_images, image_size):
+        global NSFW_Model
         global Categories
         images = []
         for img in base64_images:
             images.append(self._load_base64_image(img, image_size))
         images = np.asarray(images)
 
-        model_preds = self.nsfw_model.predict(images, batch_size = len(images))
+        model_preds = NSFW_Model.predict(images, batch_size = len(images))
         preds = np.argsort(model_preds, axis = 1).tolist()
 
         _return = []
@@ -82,15 +87,16 @@ class MediaFilterServiceHandler:
         base64_images = []
         for img in medium:
             base64_images.append(img)
-        _return = []
-        try:
-            _return = self._predict(base64_images, ImageSize)
-        except:
-            print("Error when predicting")
-            for i in range(0, len(medium)):
-                _return.append(False)
+        _return = self._predict(base64_images, ImageSize)
+        # _return = []
+        # try:
+        #     _return = self._predict(base64_images, ImageSize)
+        # except:
+        #     print("Error when predicting")
+        #     for i in range(0, len(medium)):
+        #         _return.append(False)
         end = time.time()
-        print("inference time = %.2fs", end - start)
+        print("inference time = %.2fs" %(end - start))
         print(_return)
         return _return
 

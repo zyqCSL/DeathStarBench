@@ -153,9 +153,9 @@ function _M.ComposePost()
     ngx.exit(ngx.HTTP_BAD_REQUEST)
   end
 
-  -- debug starts --
-  ngx.log(ngx.ERR, "req_id = " .. req_id)
-  -- debug ends
+  -- -- debug starts --
+  -- ngx.log(ngx.ERR, "req_id = " .. req_id)
+  -- -- debug ends
 
   local threads = {
     ngx.thread.spawn(_UploadMedia, req_id, post, carrier),
