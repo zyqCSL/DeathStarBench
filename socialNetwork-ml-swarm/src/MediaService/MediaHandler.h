@@ -85,6 +85,7 @@ void MediaHandler::UploadMedia(
   {
     // media-filter-service
     std::vector<bool> media_filter;
+    std::cout << "medium.size() = " << medium.size() << std::endl;
     if(medium.size() > 0) {
       std::future<std::vector<bool>> media_filter_future = std::async(
           std::launch::async, [&](){
@@ -92,7 +93,7 @@ void MediaHandler::UploadMedia(
             if (!media_filter_client_wrapper) {
               ServiceException se;
               se.errorCode = ErrorCode::SE_THRIFT_CONN_ERROR;
-              se.message = "Failed to connected to media-filter-service";
+              se.message = "Failed to connect to media-filter-service";
               throw se;
             }
             std::vector<bool> return_filter;
@@ -115,7 +116,8 @@ void MediaHandler::UploadMedia(
         LOG(error) << "Failed to get media-filter from media-filter-service";
         throw;
       }
-    }
+    } else 
+      std::cout << "No images needs filtering" << std::endl;
 
     /********** debug ***********/
     std::string debug_filer_str = "image_filter: ";
