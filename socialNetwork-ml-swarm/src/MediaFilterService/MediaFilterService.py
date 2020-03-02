@@ -44,10 +44,10 @@ class MediaFilterServiceHandler:
             print([base64_str])
             sys.exit()
         # tempBuff = StringIO.StringIO()
-        tempBuff = io.StringIO()
+        tempBuff = io.BytesIO()
         tempBuff.write(img_str)
         tempBuff.flush()
-        tempBuff.seek(0) #need to jump back to the beginning before handing it off to PIL
+        # tempBuff.seek(0) #need to jump back to the beginning before handing it off to PIL
         image = Image.open(tempBuff)
         if image.mode != 'RGB':
             image = image.convert('RGB')
