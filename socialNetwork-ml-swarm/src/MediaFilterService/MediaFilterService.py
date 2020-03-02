@@ -95,7 +95,7 @@ class MediaFilterServiceHandler:
         global ImageSize
         if len(medium) == 0:
             return []
-        print(media_types)
+        # print(media_types)
         # print(medium)
         start = time.time()
         _return = self._predict(medium, ImageSize)

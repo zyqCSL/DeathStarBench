@@ -48,6 +48,7 @@ class MediaHandler : public MediaServiceIf {
  private:
   ClientPool<ThriftClient<ComposePostServiceClient>> *_compose_client_pool;
   ClientPool<ThriftClient<MediaFilterServiceClient>> *_media_filter_client_pool;
+  void _findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr);
 };
 
 MediaHandler::MediaHandler(
@@ -57,10 +58,22 @@ MediaHandler::MediaHandler(
   _media_filter_client_pool = media_filter_client_pool;
 }
 
+void MediaHandler::_findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr) {
+  // Get the first occurrence
+  size_t pos = data.find(toSearch);
+  // Repeat till end is reached
+  while( pos != std::string::npos) {
+    // Replace this occurrence of Sub String
+    data.replace(pos, toSearch.size(), replaceStr);
+    // Get the next occurrence from the current position
+    pos =data.find(toSearch, pos + replaceStr.size());
+  }
+}
+
 void MediaHandler::UploadMedia(
     int64_t req_id,
-    const std::vector<std::string> &media_types,
-    const std::vector<std::string> &medium,
+    const std::vector<std::string> &_media_types,
+    const std::vector<std::string> &_medium,
     const std::map<std::string, std::string> &carrier) {
 
   // Initialize a span
@@ -73,6 +86,12 @@ void MediaHandler::UploadMedia(
       { opentracing::ChildOf(parent_span->get()) });
   opentracing::Tracer::Global()->Inject(span->context(), writer);
 
+  // copy strings and correct errors of base64 encodings
+  std::vector<std::string> media_types = _media_types;
+  std::vector<std::string> medium = _medium;
+  for(int i = 0; i < medium.size(); ++i)
+    _findAndReplaceAll(medium[i], " ", "+");
+
   if (media_types.size() != medium.size()) {
     ServiceException se;
     se.errorCode = ErrorCode::SE_THRIFT_HANDLER_ERROR;
@@ -80,23 +99,25 @@ void MediaHandler::UploadMedia(
     throw se;
   }
 
-  std::cout << "UploadMedia before thread" << std::endl;
-  if(medium.size() > 0) {
-    std::cout << "images:" << std::endl;
-    for(const std::string& img: medium)
-      std::cout << img << ";" << std::endl;
-  }
+  // std::cout << "UploadMedia before thread" << std::endl;
+  // if(medium.size() > 0) {
+  //   std::cout << "images:" << std::endl;
+  //   for(const std::string& img: medium)
+  //     std::cout << img << ";" << std::endl;
+  // }
 
   // spawn a new thread so that we don't wait on time-consuming image filtering
   std::thread([=] 
   {
     // media-filter-service
     std::vector<bool> media_filter;
-    std::cout << "medium.size() = " << medium.size() << std::endl;
+    // std::cout << "medium.size() = " << medium.size() << std::endl;
     if(medium.size() > 0) {
-      std::cout << "images:" << std::endl;
-      for(const std::string& img: medium)
-        std::cout << img << ";" << std::endl;
+      /******** debug starts *********/
+      // std::cout << "images:" << std::endl;
+      // for(const std::string& img: medium)
+      //   std::cout << img << ";" << std::endl;
+      /*****************/
       std::future<std::vector<bool>> media_filter_future = std::async(
           std::launch::async, [&](){
             auto media_filter_client_wrapper = _media_filter_client_pool->Pop();
