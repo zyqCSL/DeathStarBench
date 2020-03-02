@@ -38,11 +38,13 @@ class MediaFilterServiceHandler:
         img_str = base64.b64decode(base64_str)
         tempBuff = StringIO.StringIO()
         tempBuff.write(img_str)
+        tempBuff.flush()
         tempBuff.seek(0) #need to jump back to the beginning before handing it off to PIL
         image = Image.open(tempBuff)
         if image.mode != 'RGB':
             image = image.convert('RGB')
         image = image.resize(image_size)
+        tempBuff.close()
 
         logging.error("image data")        
         logging.error(type(image))
@@ -56,6 +58,7 @@ class MediaFilterServiceHandler:
         logging.error(type(image))
         logging.error(image.shape)
         logging.error(' ')
+
 
         image /= 255
         return image
