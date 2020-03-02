@@ -16,7 +16,8 @@ import keras
 import numpy as np
 from PIL import Image
 import base64
-import StringIO
+# import StringIO
+import io
 
 ModelPath = "./nsfw_mobilenet2.224x224.h5"
 ImageSize = (224, 224)
@@ -35,8 +36,15 @@ class MediaFilterServiceHandler:
 
     def _load_base64_image(self, base64_str, image_size):
         # base64_str += "=" * ((4 - len(base64_str) % 4) % 4)  # restore stripped '='s
-        img_str = base64.b64decode(base64_str)
-        tempBuff = StringIO.StringIO()
+        try:
+            img_str = base64.b64decode(base64_str)
+        except Exception as e:
+            print(e)
+            print("faulty b64_img:")
+            print([base64_str])
+            sys.exit()
+        # tempBuff = StringIO.StringIO()
+        tempBuff = io.StringIO()
         tempBuff.write(img_str)
         tempBuff.flush()
         tempBuff.seek(0) #need to jump back to the beginning before handing it off to PIL
@@ -88,7 +96,7 @@ class MediaFilterServiceHandler:
         if len(medium) == 0:
             return []
         print(media_types)
-        print(medium)
+        # print(medium)
         start = time.time()
         _return = self._predict(medium, ImageSize)
         # _return = []
