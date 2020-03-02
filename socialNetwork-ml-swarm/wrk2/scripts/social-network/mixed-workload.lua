@@ -237,7 +237,7 @@ local function compose_post()
   local media_types = '['
   local num_media = 0
   if math.random() < 0.2 then
-    num_media = math.random(1,3)
+    num_media = math.random(1,2)
   end
   for i = 0, num_media, 1 do
     coin = math.random(1, media_jpg_num + media_png_num)

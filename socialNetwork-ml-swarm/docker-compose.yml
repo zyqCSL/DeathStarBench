@@ -257,13 +257,13 @@ services:
     #   - 40000:40000
     restart: always
 
-  # media-filter-service:
-  #   image: yz2297/social-network-media-filter
-  #   hostname: media-filter-service
-  #   container_name: social-ml-media-filter
-  #   # ports:
-  #   #   - 40000:40000
-  #   restart: always
+  media-filter-service:
+    image: yz2297/social-network-media-filter
+    hostname: media-filter-service
+    container_name: social-ml-media-filter
+    # ports:
+    #   - 40000:40000
+    restart: always
 
   unique-id-service:
     image: yz2297/social-network-ml-swarm
