@@ -22,9 +22,14 @@ import io
 ModelPath = "./nsfw_mobilenet2.224x224.h5"
 ImageSize = (224, 224)
 Categories = ['drawings', 'hentai', 'neutral', 'porn', 'sexy']
-NSFW_Model = keras.models.load_model(ModelPath)
-NSFW_Model._make_predict_function()
-print("nsfw model loaded")
+NSFW_Models = []
+NumModels = 100
+for i in range(0, NumModels):
+    NSFW_Models += [keras.models.load_model(ModelPath)]
+    print("mode %d loaded" %i)
+for i in range(0, NumModels):
+    NSFW_Models[i]._make_predict_function()
+print("nsfw models ready")
 
 class MediaFilterServiceHandler:
     def __init__(self):
@@ -54,32 +59,32 @@ class MediaFilterServiceHandler:
         image = image.resize(image_size)
         tempBuff.close()
 
-        logging.error("image data")        
-        logging.error(type(image))
-        logging.error(image.format)
-        logging.error(image.mode)
-        logging.error(image.size)
+        # logging.error("image data")        
+        # logging.error(type(image))
+        # logging.error(image.format)
+        # logging.error(image.mode)
+        # logging.error(image.size)
 
         image = keras.preprocessing.image.img_to_array(image)
 
-        logging.error("array data")
-        logging.error(type(image))
-        logging.error(image.shape)
-        logging.error(' ')
+        # logging.error("array data")
+        # logging.error(type(image))
+        # logging.error(image.shape)
+        # logging.error(' ')
 
 
         image /= 255
         return image
 
-    def _predict(self, base64_images, image_size):
-        global NSFW_Model
+    def _predict(self, model_id, base64_images, image_size):
+        global NSFW_Models
         global Categories
         images = []
         for img in base64_images:
             images.append(self._load_base64_image(img, image_size))
         images = np.asarray(images)
 
-        model_preds = NSFW_Model.predict(images, batch_size = len(images))
+        model_preds = NSFW_Models[model_id].predict(images, batch_size = len(images))
         preds = np.argsort(model_preds, axis = 1).tolist()
 
         _return = []
@@ -93,12 +98,14 @@ class MediaFilterServiceHandler:
 
     def UploadMedia(self, req_id, media_types, medium, carrier):
         global ImageSize
+        global NumModels
         if len(medium) == 0:
             return []
         # print(media_types)
         # print(medium)
+        model_id = req_id % NumModels
         start = time.time()
-        _return = self._predict(medium, ImageSize)
+        _return = self._predict(model_id, medium, ImageSize)
         # _return = []
         # try:
         #     _return = self._predict(base64_images, ImageSize)

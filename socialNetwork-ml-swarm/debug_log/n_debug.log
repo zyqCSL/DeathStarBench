@@ -1,6 +1,0 @@
-in main
-In SetUpTracer
-after setting up jaeger
-after setting up redis client pool
-after setting up post-storage-client client pool
-Starting the home-timeline-service server...
