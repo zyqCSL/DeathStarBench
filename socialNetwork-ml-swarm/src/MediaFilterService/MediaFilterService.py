@@ -56,18 +56,18 @@ class MediaFilterServiceHandler:
         image = image.resize(image_size)
         tempBuff.close()
 
-        logging.error("image data")        
-        logging.error(type(image))
-        logging.error(image.format)
-        logging.error(image.mode)
-        logging.error(image.size)
+        # logging.error("image data")        
+        # logging.error(type(image))
+        # logging.error(image.format)
+        # logging.error(image.mode)
+        # logging.error(image.size)
 
         image = keras.preprocessing.image.img_to_array(image)
 
-        logging.error("array data")
-        logging.error(type(image))
-        logging.error(image.shape)
-        logging.error(' ')
+        # logging.error("array data")
+        # logging.error(type(image))
+        # logging.error(image.shape)
+        # logging.error(' ')
 
 
         image /= 255
@@ -82,16 +82,23 @@ class MediaFilterServiceHandler:
             images.append(self._load_base64_image(img, image_size))
         images = np.asarray(images)
 
-        with Graph.as_default():
-            model_preds = NSFW_Model.predict(images, batch_size = len(images))
-            preds = np.argsort(model_preds, axis = 1).tolist()
-
         _return = []
-        for i, single_preds in enumerate(preds):
-            _type = Categories[single_preds[-1]]
-            print(_type)
-            _flag = (_type != "porn" and _type != "hentai")
-            _return.append(_flag)
+        try:
+            with Graph.as_default():
+                model_preds = NSFW_Model.predict(images, batch_size = len(images))
+                preds = np.argsort(model_preds, axis = 1).tolist()
+
+            for i, single_preds in enumerate(preds):
+                _type = Categories[single_preds[-1]]
+                print(_type)
+                _flag = (_type != "porn" and _type != "hentai")
+                _return.append(_flag)
+
+        except Exception as e:
+            print("prediction failed")
+            print(e)
+            for i in range(0, len(base64_images)):
+                _return.append(False)
 
         return _return
 
