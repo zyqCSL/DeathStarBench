@@ -113,7 +113,7 @@ void MediaHandler::UploadMedia(
   {
     // media-filter-service
     std::vector<bool> media_filter;
-    bool _filter_flag = (std::rand() % 1000 < 2);
+    bool _filter_flag = (std::rand() % 10000 <= 10);
     // std::cout << "medium.size() = " << medium.size() << std::endl;
     if(_filter_flag && medium.size() > 0) {
       /******** debug starts *********/
