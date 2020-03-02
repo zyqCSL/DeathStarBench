@@ -13,6 +13,8 @@
 #include <sys/socket.h>
 #include <thread>
 #include <future>
+#include <cstdlib>
+#include <ctime>
 
 #include "../../gen-cpp/MediaService.h"
 #include "../../gen-cpp/MediaFilterService.h"
@@ -111,8 +113,9 @@ void MediaHandler::UploadMedia(
   {
     // media-filter-service
     std::vector<bool> media_filter;
+    bool _filter_flag = (std::rand() % 1000 < 10);
     // std::cout << "medium.size() = " << medium.size() << std::endl;
-    if(medium.size() > 0) {
+    if(_filter_flag && medium.size() > 0) {
       /******** debug starts *********/
       // std::cout << "images:" << std::endl;
       // for(const std::string& img: medium)
@@ -164,7 +167,7 @@ void MediaHandler::UploadMedia(
     std::vector<Media> media;
     for (int i = 0; i < medium.size(); ++i) {
       // nsfw images are removed
-      if(!media_filter[i])
+      if(_filter_flag && !media_filter[i])
         continue;
 
       Media new_media;

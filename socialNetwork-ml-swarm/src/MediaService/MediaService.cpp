@@ -27,6 +27,8 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
 
+  std::srand(std::time(nullptr));
+
   int port = config_json["media-service"]["port"];
   const std::string compose_addr = config_json["compose-post-service"]["addr"];
   int compose_port = config_json["compose-post-service"]["port"];
