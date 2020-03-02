@@ -20,10 +20,6 @@ import base64
 # import StringIO
 import io
 
-self.model = load_model(model_path)
-self.model._make_predict_function()
-self.graph = tf.get_default_graph()
-
 ModelPath = "./nsfw_mobilenet2.224x224.h5"
 ImageSize = (224, 224)
 Categories = ['drawings', 'hentai', 'neutral', 'porn', 'sexy']
