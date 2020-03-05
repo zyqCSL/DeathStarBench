@@ -1,6 +1,9 @@
 // Copyright (C) 2012 - Will Glozer.  All rights reserved.
 
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <stdio.h>
 
 #include "wrk.h"
 #include "script.h"
@@ -150,10 +153,15 @@ int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
     signal(SIGINT,  SIG_IGN);
 
-    pt = fopen("/filer-01/yz2297/wrk2_log/pt.txt", "w");
+    // create log directory
+    struct stat sb;
+    if(!(stat("/wrk2_log", &sb) == 0 && S_ISDIR(sb.st_mode)))
+        mkdir("/wrk2_log", 0700);
+
+    pt = fopen("./wrk2_log/pt.txt", "w");
     assert (pthread_mutex_init(&pt_lock, NULL) == 0);
 
-    per_resp_file = fopen("/filer-01/yz2297/wrk2_log/per_resp.txt", "w");
+    per_resp_file = fopen("./wrk2_log/per_resp.txt", "w");
     assert (pthread_mutex_init(&per_resp_lock, NULL) == 0);
 
     pthread_mutex_init(&statistics.mutex, NULL);
