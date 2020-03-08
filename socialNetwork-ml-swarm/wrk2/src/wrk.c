@@ -155,8 +155,8 @@ int main(int argc, char **argv) {
 
     // create log directory
     struct stat sb;
-    if(!(stat("/wrk2_log", &sb) == 0 && S_ISDIR(sb.st_mode)))
-        mkdir("/wrk2_log", 0700);
+    if(!(stat("./wrk2_log", &sb) == 0 && S_ISDIR(sb.st_mode)))
+        mkdir("./wrk2_log", 0700);
 
     pt = fopen("./wrk2_log/pt.txt", "w");
     assert (pthread_mutex_init(&pt_lock, NULL) == 0);
@@ -452,18 +452,12 @@ void *thread_main(void *arg) {
     if (!cfg.dynamic) {
         script_request(thread->L, &request, &length);
     }
-    
-    // thread->ff = NULL;
-    // if ((cfg.print_realtime_latency) && (thread->tid == 0)) {
-    //     char filename[50];
-    //     snprintf(filename, 50, "/filer01/yg397/three_tier/%" PRIu64 ".txt", thread->tid);
-    //     thread->ff = fopen(filename, "w");
-    // }
 
-    char filename[50];
-    snprintf(filename, 50, "/filer-01/yz2297/wrk2_log/%" PRIu64 ".txt", thread->tid);
-    thread->ff = fopen(filename, "w");
-
+    if (cfg.print_realtime_latency) {
+        char filename[50];
+        snprintf(filename, 50, "./wrk2_log/%" PRIu64 ".txt", thread->tid);
+        thread->ff = fopen(filename, "w");
+    }
 
     double throughput = (thread->throughput / 1000000.0) / thread->connections;
 
