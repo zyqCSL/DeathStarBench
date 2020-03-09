@@ -235,7 +235,7 @@ def compose_post_for_each(session, addr):
 
     # media
     num_media = 0
-    if random.random() < 0.2:
+    if random.random() < 0.05:
       num_media = random.randint(1,3)
       print("num_media: " + str(num_media))
 
@@ -310,7 +310,7 @@ def compose_post(session, addr):
 
   # media
   num_media = 0
-  if random.random() < 0.2:
+  if random.random() < 0.05:
     num_media = random.randint(1,3)
   medium = '['
   media_types = '['
@@ -413,9 +413,9 @@ if __name__ == '__main__':
     edges = getEdges(file)
 
   # nginx is on ath-3
-  # addr = "http://127.0.0.1:8080"
-  addr = "http://128.253.128.245:8080" # ath-9
-  addr = "http://128.253.128.76:8080" # ath-8
+  addr = "http://127.0.0.1:8080"
+  # addr = "http://128.253.128.245:8080" # ath-9
+  # addr = "http://128.253.128.76:8080" # ath-8
 
   register(addr, nodes)
   follow(addr, edges)
